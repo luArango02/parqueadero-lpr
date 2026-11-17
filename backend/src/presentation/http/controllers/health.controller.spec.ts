@@ -1,0 +1,22 @@
+import { Test } from '@nestjs/testing';
+import { HealthController } from './health.controller';
+
+describe('HealthController', () => {
+  let controller: HealthController;
+
+  beforeEach(async () => {
+    const moduleRef = await Test.createTestingModule({
+      controllers: [HealthController],
+    }).compile();
+
+    controller = moduleRef.get(HealthController);
+  });
+
+  it('responde que el servicio está activo', () => {
+    const result = controller.check();
+
+    expect(result.status).toBe('ok');
+    expect(result.service).toBe('parqueadero-lpr-backend');
+    expect(new Date(result.timestamp).toString()).not.toBe('Invalid Date');
+  });
+});
