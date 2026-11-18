@@ -3,15 +3,25 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { PrismaService } from './../src/infrastructure/database/prisma.service';
 import { HttpExceptionFilter } from './../src/presentation/http/filters/http-exception.filter';
 
+// PrismaService se reemplaza por un doble para no depender de una base de datos real.
 describe('API (e2e)', () => {
   let app: INestApplication<App>;
+  const prismaFalso = {
+    estaDisponible: jest.fn(() => Promise.resolve(true)),
+    onModuleInit: jest.fn(),
+    onModuleDestroy: jest.fn(),
+  };
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prismaFalso)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api', { exclude: ['health'] });
@@ -27,7 +37,15 @@ describe('API (e2e)', () => {
     const response = await request(app.getHttpServer())
       .get('/health')
       .expect(200);
-    expect(response.body).toMatchObject({ status: 'ok' });
+    expect(response.body).toMatchObject({ status: 'ok', database: 'ok' });
+  });
+
+  it('GET /health responde 503 si la base de datos no responde', async () => {
+    prismaFalso.estaDisponible.mockResolvedValueOnce(false);
+    const response = await request(app.getHttpServer())
+      .get('/health')
+      .expect(503);
+    expect(response.body).toMatchObject({ statusCode: 503 });
   });
 
   it('una ruta inexistente responde 404 con el formato de error común', async () => {

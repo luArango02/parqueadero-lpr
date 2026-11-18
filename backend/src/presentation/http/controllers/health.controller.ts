@@ -1,27 +1,30 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { PrismaService } from '../../../infrastructure/database/prisma.service';
 
 export interface HealthResponse {
   status: 'ok';
   service: string;
   timestamp: string;
-  database: 'pendiente';
+  database: 'ok';
 }
 
-/**
- * Endpoint de salud: sirve para comprobar que el backend está vivo.
- * Docker Compose y el despliegue en la nube lo usan para saber si el servicio arrancó.
- *
- * La verificación de la base de datos se agrega en ACT-005, cuando exista Prisma.
- */
+// Responde 503 si la base de datos no responde, para que el healthcheck de Docker marque el servicio como no sano.
 @Controller('health')
 export class HealthController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Get()
-  check(): HealthResponse {
+  async check(): Promise<HealthResponse> {
+    const baseDisponible = await this.prisma.estaDisponible();
+    if (!baseDisponible) {
+      throw new ServiceUnavailableException('La base de datos no responde');
+    }
+
     return {
       status: 'ok',
       service: 'parqueadero-lpr-backend',
       timestamp: new Date().toISOString(),
-      database: 'pendiente',
+      database: 'ok',
     };
   }
 }
