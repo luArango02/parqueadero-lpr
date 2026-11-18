@@ -53,15 +53,37 @@ Comprobar: abrir http://localhost:3000/health
 | `docker compose down` | Apagar todo; los datos se conservan |
 | `docker compose down -v` | Apagar y **borrar** los datos de la base |
 
+Al arrancar, el contenedor del backend aplica las migraciones pendientes (`prisma migrate deploy`).
+
 ## Cómo ejecutar el backend sin Docker (desarrollo)
 
 ```bash
 docker compose up db -d       # solo la base de datos
 cd backend
-npm install
+npm install                   # también genera el cliente de Prisma
 cp .env.example .env
+npm run prisma:migrate        # crea/actualiza las tablas
+npm run db:seed               # datos de prueba
 npm run start:dev
 ```
+
+## Base de datos (Prisma)
+
+- Modelo: `backend/prisma/schema.prisma`. Migraciones: `backend/prisma/migrations/`.
+- Para cambiar el modelo: editar `schema.prisma` y ejecutar `npm run prisma:migrate -- --name descripcion-del-cambio`.
+- Ver los datos en el navegador: `npx prisma studio`.
+- El seed crea la sede "Sede Principal", 2 carriles, 10 espacios de carro (A-01 a A-10), 5 de moto (M-01 a M-05), las tarifas versión 1 y dos usuarios de prueba:
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| admin@parqueadero.local | Admin123* | Administrador |
+| operador@parqueadero.local | Operador123* | Operador |
+
+Restricciones importantes que garantiza la base de datos:
+
+- Un solo cobro por placa, sede y día operativo (RN-04).
+- Un solo pago por cobro y referencia de pago única (idempotencia).
+- Un vehículo no puede tener dos permanencias activas, y un espacio no puede estar ocupado por dos vehículos.
 
 ## Pruebas
 

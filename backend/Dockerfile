@@ -1,20 +1,21 @@
-# Imagen del backend en dos etapas:
-# 1) build: instala todo y compila TypeScript a JavaScript (carpeta dist/).
-# 2) runtime: imagen liviana solo con lo necesario para ejecutar.
-
 FROM node:22-alpine AS build
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run build && npm prune --omit=dev
 
+# La imagen final no lleva el código fuente ni las dependencias de desarrollo.
 FROM node:22-alpine AS runtime
+RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/dist ./dist
 EXPOSE 3000
 USER node
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]

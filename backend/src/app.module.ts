@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { DatabaseModule } from './infrastructure/database/database.module';
 import { HealthController } from './presentation/http/controllers/health.controller';
 
 @Module({
-  imports: [
-    // Lee las variables del archivo .env y las deja disponibles en toda la app.
-    ConfigModule.forRoot({ isGlobal: true }),
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule],
   controllers: [HealthController],
 })
 export class AppModule {}
