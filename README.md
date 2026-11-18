@@ -33,18 +33,35 @@ frontend/   Aplicación Vue 3 (pendiente, ACT-003)
 docs/       Documentación del proyecto
 ```
 
-## Cómo ejecutar el backend (por ahora, sin Docker)
+## Cómo ejecutar con Docker Compose
+
+Requisitos: Docker Desktop abierto.
 
 ```bash
+cp .env.example .env          # en PowerShell: copy .env.example .env
+docker compose up --build     # levanta PostgreSQL y el backend
+```
+
+Comprobar: abrir http://localhost:3000/health
+
+| Comando | Para qué |
+|---|---|
+| `docker compose up --build -d` | Levantar todo en segundo plano |
+| `docker compose up db -d` | Levantar solo la base de datos (para desarrollar con `npm run start:dev`) |
+| `docker compose ps` | Ver el estado de los servicios |
+| `docker compose logs -f backend` | Ver los logs del backend |
+| `docker compose down` | Apagar todo; los datos se conservan |
+| `docker compose down -v` | Apagar y **borrar** los datos de la base |
+
+## Cómo ejecutar el backend sin Docker (desarrollo)
+
+```bash
+docker compose up db -d       # solo la base de datos
 cd backend
 npm install
 cp .env.example .env
 npm run start:dev
 ```
-
-Comprobar: abrir http://localhost:3000/health
-
-Docker Compose se agrega en ACT-004.
 
 ## Pruebas
 
