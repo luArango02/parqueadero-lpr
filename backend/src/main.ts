@@ -6,18 +6,13 @@ import { HttpExceptionFilter } from './presentation/http/filters/http-exception.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Todas las rutas de la API quedan bajo /api, excepto /health.
+  // /health queda fuera de /api porque lo consultan Docker y la nube, no el frontend.
   app.setGlobalPrefix('api', { exclude: ['health'] });
-
-  // Respuestas de error con el mismo formato en toda la API.
   app.useGlobalFilters(new HttpExceptionFilter());
-
-  // Permite que el frontend (Vue) llame a la API desde otro puerto.
   app.enableCors();
 
   const config = app.get(ConfigService);
-  const port = config.get<number>('PORT', 3000);
-  await app.listen(port);
+  await app.listen(config.get<number>('PORT', 3000));
 }
 
 void bootstrap();

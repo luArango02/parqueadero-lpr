@@ -1,5 +1,4 @@
-# Guarda los archivos de texto con saltos de línea LF, también en Windows.
-# Evita errores de Prettier/ESLint ("Delete ␍") al trabajar desde Windows.
+# Saltos de línea LF también en Windows; con CRLF el lint de Prettier falla.
 * text=auto eol=lf
 *.png binary
 *.jpg binary

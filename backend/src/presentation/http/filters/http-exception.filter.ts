@@ -8,10 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-/**
- * Filtro global de errores: cualquier error de la API responde con el mismo formato
- * y los errores inesperados (500) se registran en los logs sin mostrar detalles internos.
- */
+// Los errores inesperados se registran en el log, pero al cliente no se le muestran detalles internos.
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
