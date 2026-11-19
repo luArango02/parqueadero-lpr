@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
@@ -10,6 +11,7 @@ async function bootstrap() {
   // /health queda fuera de /api porque lo consultan Docker y la nube, no el frontend.
   app.setGlobalPrefix('api', { exclude: ['health'] });
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors();
   configurarSwagger(app);
 
