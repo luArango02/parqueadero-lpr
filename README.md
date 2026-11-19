@@ -59,6 +59,8 @@ Al arrancar, el contenedor del backend aplica las migraciones pendientes (`prism
 
 Con el backend corriendo, abrir http://localhost:3000/docs. Ahí aparecen todos los endpoints y se pueden probar desde el navegador.
 
+Ejemplo: en **Accesos → POST /api/accesos/ingreso**, *Try it out*, con el cuerpo `{ "placa": "ABC123" }` registra el ingreso de un carro. La respuesta indica si la barrera abre, el espacio asignado y el cobro generado.
+
 ## Cómo ejecutar el backend sin Docker (desarrollo)
 
 ```bash
