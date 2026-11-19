@@ -55,6 +55,10 @@ Comprobar: abrir http://localhost:3000/health
 
 Al arrancar, el contenedor del backend aplica las migraciones pendientes (`prisma migrate deploy`).
 
+## Documentación de la API (Swagger)
+
+Con el backend corriendo, abrir http://localhost:3000/docs. Ahí aparecen todos los endpoints y se pueden probar desde el navegador.
+
 ## Cómo ejecutar el backend sin Docker (desarrollo)
 
 ```bash

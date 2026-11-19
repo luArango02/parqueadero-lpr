@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from './../src/infrastructure/database/prisma.service';
+import { configurarSwagger } from './../src/presentation/http/docs/swagger';
 import { HttpExceptionFilter } from './../src/presentation/http/filters/http-exception.filter';
 
 // PrismaService se reemplaza por un doble para no depender de una base de datos real.
@@ -26,6 +27,7 @@ describe('API (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api', { exclude: ['health'] });
     app.useGlobalFilters(new HttpExceptionFilter());
+    configurarSwagger(app);
     await app.init();
   });
 
@@ -56,5 +58,12 @@ describe('API (e2e)', () => {
       statusCode: 404,
       path: '/api/no-existe',
     });
+  });
+
+  it('GET /docs-json publica la documentación con el endpoint de salud', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/docs-json')
+      .expect(200);
+    expect(response.body).toHaveProperty(['paths', '/health']);
   });
 });
