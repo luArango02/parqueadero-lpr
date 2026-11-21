@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EspaciosModule } from './espacios.module';
 
 import { AccesosModule } from './accesos.module';
+import { DeteccionesModule } from './detecciones.module';
 import { TarifasModule } from './application/tarifas/tarifas.module';
 
 import { DatabaseModule } from './infrastructure/database/database.module';
@@ -18,6 +19,7 @@ import { CobrosModule } from './cobros.module';
     UsuariosModule,
     AccesosModule,
     VehiculosModule,
+    DeteccionesModule,
     CobrosModule,
     TarifasModule,
     EspaciosModule,
