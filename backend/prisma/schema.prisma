@@ -55,6 +55,12 @@ enum EstadoDeteccion {
   CORREGIDA
 }
 
+enum OrigenLectura {
+  SIMULADOR
+  OCR
+  MANUAL
+}
+
 enum TipoEvento {
   INGRESO
   SALIDA
@@ -161,6 +167,7 @@ model Deteccion {
   // La leída si se aceptó, o la corregida por el operador (se conserva la original).
   placaFinal       String?         @map("placa_final")
   confianza        Float
+  origen           OrigenLectura   @default(SIMULADOR)
   tipoVisual       TipoVehiculo?   @map("tipo_visual")
   estado           EstadoDeteccion
   lecturaManual    Boolean         @default(false) @map("lectura_manual")
