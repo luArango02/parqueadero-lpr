@@ -61,6 +61,21 @@ Con el backend corriendo, abrir http://localhost:3000/docs. Ahí aparecen todos 
 
 Ejemplo: en **Accesos → POST /api/accesos/ingreso**, *Try it out*, con el cuerpo `{ "placa": "ABC123" }` registra el ingreso de un carro. La respuesta indica si la barrera abre, el espacio asignado y el cobro generado.
 
+## Autenticación y roles
+
+1. `POST /api/auth/login` con correo y clave devuelve un `accessToken` (JWT, dura `JWT_EXPIRES_IN`).
+2. Las rutas privadas se llaman con el encabezado `Authorization: Bearer <token>`. En Swagger: botón **Authorize**.
+3. Sin token o con un token inválido la API responde **401**; con un rol sin permiso responde **403**.
+
+| Endpoint | Quién |
+|---|---|
+| `GET /api/auth/profile` | Cualquier usuario autenticado |
+| `GET /api/usuarios`, `POST /api/usuarios`, `PATCH /api/usuarios/{id}` | Solo `ADMINISTRADOR` |
+
+Las claves se guardan con bcrypt y cada creación o modificación de usuarios queda en la tabla `auditoria`.
+
+Para proteger un endpoint nuevo basta con el decorador `@Autenticado()` (cualquier rol) o `@Autenticado('ADMINISTRADOR')` en el controlador o en el método.
+
 ## Cómo ejecutar el backend sin Docker (desarrollo)
 
 ```bash
