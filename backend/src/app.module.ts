@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EspaciosModule } from './espacios.module';
 
 import { AccesosModule } from './accesos.module';
 import { TarifasModule } from './application/tarifas/tarifas.module';
@@ -15,6 +16,7 @@ import { CobrosModule } from './cobros.module';
     AccesosModule,
     CobrosModule,
     TarifasModule,
+    EspaciosModule,
   ],
   controllers: [HealthController],
 })
