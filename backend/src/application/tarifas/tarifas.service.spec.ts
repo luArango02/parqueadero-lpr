@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method -- los mocks de jest se verifican con expect(mock.metodo) */
 import {
   BadRequestException,
   ConflictException,

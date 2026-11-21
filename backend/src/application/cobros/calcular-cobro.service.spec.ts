@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method -- los mocks de jest se verifican con expect(mock.metodo) */
 import { NotFoundException } from '@nestjs/common';
 import { CalcularCobroService } from './calcular-cobro.service';
 import type { CobroConsultasRepository } from './cobro-consultas.repository';
