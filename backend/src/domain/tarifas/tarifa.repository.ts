@@ -17,6 +17,7 @@ export interface NuevaVersionTarifa {
   tipoVehiculo: TipoVehiculoTarifa;
   valorDiurno: string;
   valorNocturno: string;
+  tarifaEsperadaId?: string;
 }
 
 export interface ResultadoVersionTarifa {

@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { NotFoundException } from '@nestjs/common';
-
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { PrismaTarifaRepository } from './prisma-tarifa.repository';
 
@@ -134,5 +133,153 @@ describe('PrismaTarifaRepository - integración PARQ-21', () => {
         valorNocturno: '6000.00',
       }),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('PATCH crea una nueva version y conserva la otra franja', async () => {
+    const vigentes = await repositorio.listarVigentes(sedeId, new Date());
+
+    const diurnaActual = vigentes.find(
+      (tarifa) => tarifa.tipoVehiculo === 'CARRO' && tarifa.franja === 'DIURNA',
+    );
+
+    expect(diurnaActual).toBeDefined();
+
+    const resultado = await repositorio.crearVersion({
+      sedeId,
+      tipoVehiculo: 'CARRO',
+      valorDiurno: '10000.00',
+      valorNocturno: '6000.00',
+      tarifaEsperadaId: diurnaActual!.id,
+    });
+
+    expect(resultado.diurna.version).toBe(3);
+    expect(resultado.nocturna.version).toBe(3);
+    expect(resultado.diurna.valor).toBe('10000.00');
+    expect(resultado.nocturna.valor).toBe('6000.00');
+
+    const anterior = await repositorio.buscarPorId(diurnaActual!.id);
+
+    expect(anterior?.valor).toBe('9000.00');
+    expect(anterior?.vigenteHasta).not.toBeNull();
+  });
+
+  it('rechaza PATCH basado en una tarifa historica', async () => {
+    const historialAntes = await repositorio.listar(sedeId);
+
+    const tarifaHistorica = historialAntes.find(
+      (tarifa) =>
+        tarifa.tipoVehiculo === 'CARRO' &&
+        tarifa.version === 2 &&
+        tarifa.franja === 'DIURNA',
+    );
+
+    expect(tarifaHistorica).toBeDefined();
+
+    await expect(
+      repositorio.crearVersion({
+        sedeId,
+        tipoVehiculo: 'CARRO',
+        valorDiurno: '11000.00',
+        valorNocturno: '6000.00',
+        tarifaEsperadaId: tarifaHistorica!.id,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    const historialDespues = await repositorio.listar(sedeId);
+
+    expect(historialDespues).toHaveLength(historialAntes.length);
+  });
+
+  it('rechaza PATCH cuando la otra franja cambio', async () => {
+    const vigentes = await repositorio.listarVigentes(sedeId, new Date());
+
+    const nocturnaActual = vigentes.find(
+      (tarifa) =>
+        tarifa.tipoVehiculo === 'CARRO' && tarifa.franja === 'NOCTURNA',
+    );
+
+    expect(nocturnaActual).toBeDefined();
+
+    const historialAntes = await repositorio.listar(sedeId);
+
+    await expect(
+      repositorio.crearVersion({
+        sedeId,
+        tipoVehiculo: 'CARRO',
+        valorDiurno: '9000.00',
+        valorNocturno: '5500.00',
+        tarifaEsperadaId: nocturnaActual!.id,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    const historialDespues = await repositorio.listar(sedeId);
+
+    expect(historialDespues).toHaveLength(historialAntes.length);
+  });
+
+  it('rechaza una segunda actualizacion basada en la misma tarifa', async () => {
+    const vigentes = await repositorio.listarVigentes(sedeId, new Date());
+
+    const diurnaActual = vigentes.find(
+      (tarifa) => tarifa.tipoVehiculo === 'CARRO' && tarifa.franja === 'DIURNA',
+    );
+
+    expect(diurnaActual).toBeDefined();
+
+    const resultados = await Promise.allSettled([
+      repositorio.crearVersion({
+        sedeId,
+        tipoVehiculo: 'CARRO',
+        valorDiurno: '11000.00',
+        valorNocturno: '6000.00',
+        tarifaEsperadaId: diurnaActual!.id,
+      }),
+      repositorio.crearVersion({
+        sedeId,
+        tipoVehiculo: 'CARRO',
+        valorDiurno: '12000.00',
+        valorNocturno: '6000.00',
+        tarifaEsperadaId: diurnaActual!.id,
+      }),
+    ]);
+
+    const exitosos = resultados.filter(
+      (resultado) => resultado.status === 'fulfilled',
+    );
+
+    const rechazados = resultados.filter(
+      (resultado) => resultado.status === 'rejected',
+    );
+
+    expect(exitosos).toHaveLength(1);
+    expect(rechazados).toHaveLength(1);
+
+    const rechazo = rechazados[0];
+
+    expect(rechazo.status).toBe('rejected');
+
+    if (rechazo.status === 'rejected') {
+      expect(rechazo.reason).toBeInstanceOf(ConflictException);
+    }
+
+    const historial = await repositorio.listar(sedeId);
+
+    expect(
+      historial.filter(
+        (tarifa) =>
+          tarifa.tipoVehiculo === 'CARRO' &&
+          tarifa.franja === 'DIURNA' &&
+          tarifa.vigenteHasta === null,
+      ),
+    ).toHaveLength(1);
+
+    expect(
+      historial.filter(
+        (tarifa) =>
+          tarifa.tipoVehiculo === 'CARRO' &&
+          tarifa.franja === 'NOCTURNA' &&
+          tarifa.vigenteHasta === null,
+      ),
+    ).toHaveLength(1);
   });
 });

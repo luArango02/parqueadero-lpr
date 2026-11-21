@@ -1,5 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { TarifasService } from './tarifas.service';
 
 import type {
@@ -152,5 +155,106 @@ describe('TarifasService - PARQ-21', () => {
     });
 
     expect(repositorio.crearVersion).toHaveBeenCalled();
+  });
+
+  describe('PATCH /tarifas/:id', () => {
+    const nocturna: TarifaRegistrada = {
+      ...tarifaEjemplo,
+      id: 'tarifa-nocturna-1',
+      franja: 'NOCTURNA',
+      valor: '5000.00',
+    };
+
+    it('modifica la tarifa diurna conservando la nocturna', async () => {
+      repositorio.buscarPorId.mockResolvedValue(tarifaEjemplo);
+      repositorio.listarVigentes.mockResolvedValue([tarifaEjemplo, nocturna]);
+
+      repositorio.crearVersion.mockResolvedValue({
+        diurna: {
+          ...tarifaEjemplo,
+          id: 'tarifa-diurna-2',
+          valor: '9000.00',
+          version: 2,
+        },
+        nocturna: {
+          ...nocturna,
+          id: 'tarifa-nocturna-2',
+          version: 2,
+        },
+      });
+
+      const resultado = await service.modificarTarifa('tarifa-1', {
+        valor: 9000,
+      });
+
+      expect(resultado.diurna.version).toBe(2);
+
+      expect(repositorio.crearVersion).toHaveBeenCalledWith({
+        sedeId: 'sede-1',
+        tipoVehiculo: 'CARRO',
+        valorDiurno: '9000.00',
+        valorNocturno: '5000.00',
+        tarifaEsperadaId: 'tarifa-1',
+      });
+    });
+
+    it('modifica la nocturna conservando la diurna', async () => {
+      repositorio.buscarPorId.mockResolvedValue(nocturna);
+      repositorio.listarVigentes.mockResolvedValue([tarifaEjemplo, nocturna]);
+
+      repositorio.crearVersion.mockResolvedValue({
+        diurna: tarifaEjemplo,
+        nocturna: {
+          ...nocturna,
+          valor: '4000.00',
+          version: 2,
+        },
+      });
+
+      await service.modificarTarifa('tarifa-nocturna-1', {
+        valor: 4000,
+      });
+
+      expect(repositorio.crearVersion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          valorDiurno: '8000.00',
+          valorNocturno: '4000.00',
+          tarifaEsperadaId: 'tarifa-nocturna-1',
+        }),
+      );
+    });
+
+    it('rechaza una tarifa nocturna igual a la diurna', async () => {
+      repositorio.buscarPorId.mockResolvedValue(nocturna);
+      repositorio.listarVigentes.mockResolvedValue([tarifaEjemplo, nocturna]);
+
+      await expect(
+        service.modificarTarifa('tarifa-nocturna-1', {
+          valor: 8000,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(repositorio.crearVersion).not.toHaveBeenCalled();
+    });
+
+    it('rechaza la modificación de una tarifa histórica', async () => {
+      repositorio.buscarPorId.mockResolvedValue({
+        ...tarifaEjemplo,
+        vigenteHasta: new Date('2026-11-18T12:00:00Z'),
+      });
+
+      repositorio.listarVigentes.mockResolvedValue([
+        { ...tarifaEjemplo, id: 'tarifa-actual' },
+        nocturna,
+      ]);
+
+      await expect(
+        service.modificarTarifa('tarifa-1', {
+          valor: 9000,
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      expect(repositorio.crearVersion).not.toHaveBeenCalled();
+    });
   });
 });

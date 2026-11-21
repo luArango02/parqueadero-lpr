@@ -3,6 +3,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 
 import {
@@ -23,6 +24,10 @@ export interface ActualizarTarifasInput {
   tipoVehiculo: TipoVehiculoTarifa;
   valorDiurno: number;
   valorNocturno: number;
+}
+
+export interface ModificarTarifaInput {
+  valor: number;
 }
 
 @Injectable()
@@ -94,6 +99,69 @@ export class TarifasService {
       tipoVehiculo: datos.tipoVehiculo,
       valorDiurno: datos.valorDiurno.toFixed(2),
       valorNocturno: datos.valorNocturno.toFixed(2),
+    });
+  }
+
+  async modificarTarifa(
+    id: string,
+    datos: ModificarTarifaInput,
+  ): Promise<ResultadoVersionTarifa> {
+    const tarifa = await this.buscarPorId(id);
+
+    const vigentes = await this.listarVigentes(tarifa.sedeId);
+
+    const tarifaActual = vigentes.find(
+      (item) =>
+        item.tipoVehiculo === tarifa.tipoVehiculo &&
+        item.franja === tarifa.franja,
+    );
+
+    if (!tarifaActual || tarifaActual.id !== tarifa.id) {
+      throw new ConflictException('Solo se pueden modificar tarifas vigentes.');
+    }
+
+    const diurna = vigentes.find(
+      (item) =>
+        item.tipoVehiculo === tarifa.tipoVehiculo && item.franja === 'DIURNA',
+    );
+
+    const nocturna = vigentes.find(
+      (item) =>
+        item.tipoVehiculo === tarifa.tipoVehiculo && item.franja === 'NOCTURNA',
+    );
+
+    if (!diurna || !nocturna) {
+      throw new ConflictException(
+        'No existe el par completo de tarifas vigentes.',
+      );
+    }
+
+    const valorDiurno =
+      tarifa.franja === 'DIURNA' ? datos.valor : Number(diurna.valor);
+
+    const valorNocturno =
+      tarifa.franja === 'NOCTURNA' ? datos.valor : Number(nocturna.valor);
+
+    try {
+      validarRelacionTarifas({
+        tipoVehiculo: tarifa.tipoVehiculo,
+        valorDiurno,
+        valorNocturno,
+      });
+    } catch (error: unknown) {
+      if (error instanceof TarifaInvalidaError) {
+        throw new BadRequestException(error.message);
+      }
+
+      throw error;
+    }
+
+    return this.repositorio.crearVersion({
+      sedeId: tarifa.sedeId,
+      tipoVehiculo: tarifa.tipoVehiculo,
+      valorDiurno: valorDiurno.toFixed(2),
+      valorNocturno: valorNocturno.toFixed(2),
+      tarifaEsperadaId: tarifa.id,
     });
   }
 

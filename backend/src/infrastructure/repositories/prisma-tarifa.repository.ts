@@ -96,6 +96,61 @@ export class PrismaTarifaRepository implements TarifaRepository {
             orderBy: { version: 'desc' },
           });
 
+          if (datos.tarifaEsperadaId) {
+            const tarifaEsperada = anteriores.find(
+              (tarifa) => tarifa.id === datos.tarifaEsperadaId,
+            );
+
+            if (
+              !tarifaEsperada ||
+              tarifaEsperada.vigenteDesde > ahora ||
+              tarifaEsperada.vigenteHasta !== null
+            ) {
+              throw new ConflictException(
+                'La tarifa fue modificada por otro proceso. Consulte las tarifas vigentes e intente nuevamente.',
+              );
+            }
+
+            const diurnaActual = anteriores.find(
+              (tarifa) =>
+                tarifa.franja === 'DIURNA' &&
+                tarifa.vigenteDesde <= ahora &&
+                tarifa.vigenteHasta === null,
+            );
+
+            const nocturnaActual = anteriores.find(
+              (tarifa) =>
+                tarifa.franja === 'NOCTURNA' &&
+                tarifa.vigenteDesde <= ahora &&
+                tarifa.vigenteHasta === null,
+            );
+
+            if (!diurnaActual || !nocturnaActual) {
+              throw new ConflictException(
+                'No existe el par completo de tarifas vigentes.',
+              );
+            }
+
+            const valorDiurnoActualizado =
+              tarifaEsperada.franja === 'DIURNA'
+                ? datos.valorDiurno
+                : diurnaActual.valor.toFixed(2);
+
+            const valorNocturnoActualizado =
+              tarifaEsperada.franja === 'NOCTURNA'
+                ? datos.valorNocturno
+                : nocturnaActual.valor.toFixed(2);
+
+            if (
+              valorDiurnoActualizado !== datos.valorDiurno ||
+              valorNocturnoActualizado !== datos.valorNocturno
+            ) {
+              throw new ConflictException(
+                'Los valores de las tarifas cambiaron durante la actualización.',
+              );
+            }
+          }
+
           const ultimaVersion = anteriores.reduce(
             (maximo, tarifa) => Math.max(maximo, tarifa.version),
             0,
