@@ -28,6 +28,7 @@ class RepositorioEnMemoria implements IngresoRepositorio {
   cobros: CobroDelDia[] = [];
   placasCobro = new Map<string, string>();
   denegados: DatosDenegado[] = [];
+  alertasAbiertas = new Set<string>();
 
   sedeOperativa(): Promise<SedeOperativa> {
     return Promise.resolve({
@@ -47,6 +48,9 @@ class RepositorioEnMemoria implements IngresoRepositorio {
   }
   estaAdentro(placa: string): Promise<boolean> {
     return Promise.resolve(this.adentro.has(placa));
+  }
+  alertaAbierta(placa: string): Promise<boolean> {
+    return Promise.resolve(this.alertasAbiertas.has(placa));
   }
   cobroDelDia(
     placa: string,
@@ -296,5 +300,42 @@ describe('RegistrarIngresoUseCase', () => {
       },
     ]);
     expect(repositorio.denegados).toHaveLength(1);
+  });
+
+  it('con una discrepancia carro/moto abierta no se asigna espacio ni se crea cobro (TC-15)', async () => {
+    repositorio.alertasAbiertas.add('ABC123');
+    reloj.instante = local('2026-11-20T15:00');
+
+    const resultado = await casoDeUso.ejecutar({ placa: 'ABC123' });
+
+    expect(resultado).toMatchObject({
+      autorizado: false,
+      barrera: 'CERRADA',
+      motivo: 'DISCREPANCIA CARRO/MOTO: REQUIERE VALIDACIÓN DEL OPERADOR',
+      espacio: null,
+      cobro: null,
+    });
+    expect(repositorio.cobros).toHaveLength(0);
+    expect(repositorio.adentro.has('ABC123')).toBe(false);
+    expect(repositorio.denegados).toHaveLength(1);
+  });
+
+  it('la discrepancia de una placa no bloquea a las demás', async () => {
+    repositorio.alertasAbiertas.add('ABC123');
+
+    const otra = await casoDeUso.ejecutar({ placa: 'DEF456' });
+
+    expect(otra.autorizado).toBe(true);
+  });
+
+  it('al resolverse la alerta, el ingreso vuelve a funcionar', async () => {
+    repositorio.alertasAbiertas.add('ABC123');
+
+    const bloqueado = await casoDeUso.ejecutar({ placa: 'ABC123' });
+    repositorio.alertasAbiertas.delete('ABC123');
+    const permitido = await casoDeUso.ejecutar({ placa: 'ABC123' });
+
+    expect(bloqueado.autorizado).toBe(false);
+    expect(permitido).toMatchObject({ autorizado: true, espacio: 'A-01' });
   });
 });

@@ -1,3 +1,4 @@
+import { TipoAlerta } from '../../domain/alertas/alerta';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import {
@@ -43,6 +44,14 @@ export class PrismaIngresoRepositorio implements IngresoRepositorio {
       where: { vehiculo: { placa }, vehiculoActivoId: { not: null } },
     });
     return activa !== null;
+  }
+
+  async alertaAbierta(placa: string, tipo: TipoAlerta): Promise<boolean> {
+    const alerta = await this.prisma.alerta.findFirst({
+      where: { placa, tipo, estado: 'ABIERTA' },
+      select: { id: true },
+    });
+    return alerta !== null;
   }
 
   async cobroDelDia(

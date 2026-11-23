@@ -1,3 +1,4 @@
+import { TipoAlerta } from '../../domain/alertas/alerta';
 import { ConfigHorario, Franja } from '../../domain/tiempo/reglas-horario';
 import { TipoVehiculo } from '../../domain/vehiculos/placa';
 
@@ -53,6 +54,8 @@ export interface IngresoRepositorio {
   carrilDeEntrada(sedeId: string, carrilId?: string): Promise<string>;
   tipoRegistrado(placa: string): Promise<TipoVehiculo | null>;
   estaAdentro(placa: string): Promise<boolean>;
+  /** ¿Hay una alerta abierta de ese tipo para la placa? Por ejemplo, una discrepancia sin resolver. */
+  alertaAbierta(placa: string, tipo: TipoAlerta): Promise<boolean>;
   cobroDelDia(
     placa: string,
     sedeId: string,
