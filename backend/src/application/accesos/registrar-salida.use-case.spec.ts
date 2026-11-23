@@ -5,6 +5,7 @@ import { RegistrarSalidaUseCase } from './registrar-salida.use-case';
 import {
   DatosSalida,
   DatosSalidaDenegada,
+  DatosVerificacionCobros,
   PermanenciaActiva,
   SalidaRepositorio,
 } from './salida.repositorio';
@@ -67,6 +68,15 @@ class RepositorioEnMemoria implements SalidaRepositorio {
       diaOperativo: dia,
     });
     this.cobros.set(placa, lista);
+  }
+
+  verificacionesCobros: DatosVerificacionCobros[] = [];
+
+  garantizarCobrosPorCambioDeDia(
+    datos: DatosVerificacionCobros,
+  ): Promise<void> {
+    this.verificacionesCobros.push(datos);
+    return Promise.resolve();
   }
 }
 
@@ -197,5 +207,43 @@ describe('RegistrarSalidaUseCase', () => {
     await casoDeUso.ejecutar({ placa: 'XYZ45A' });
 
     expect(espaciosAlAvisar).toEqual([['M-01']]);
+  });
+
+  it('verifica los cobros antes de autorizar la salida', async () => {
+    repositorio.estacionar('DEF456', 'CARRO', 'A-01');
+    repositorio.cobrar('DEF456', 'PAGADO');
+
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'DEF456',
+    });
+
+    expect(resultado.autorizado).toBe(true);
+    expect(repositorio.verificacionesCobros).toHaveLength(1);
+
+    expect(repositorio.verificacionesCobros[0]).toMatchObject({
+      sedeId: 'sede-1',
+      placa: 'DEF456',
+      vehiculoId: 'veh-DEF456',
+      tipo: 'CARRO',
+      zonaHoraria: 'America/Bogota',
+      inicioDiaOperativo: '06:00',
+    });
+  });
+
+  it('no verifica cobros cuando la placa no está adentro', async () => {
+    await casoDeUso.ejecutar({ placa: 'GHI789' });
+
+    expect(repositorio.verificacionesCobros).toHaveLength(0);
+  });
+
+  it('no verifica cobros cuando la lectura tiene baja confianza', async () => {
+    repositorio.estacionar('DEF456', 'CARRO', 'A-01');
+
+    await casoDeUso.ejecutar({
+      placa: 'DEF456',
+      confianza: 0.5,
+    });
+
+    expect(repositorio.verificacionesCobros).toHaveLength(0);
   });
 });
