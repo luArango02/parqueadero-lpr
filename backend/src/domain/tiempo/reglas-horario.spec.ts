@@ -1,6 +1,7 @@
 import {
   ConfigHorario,
   calcularDiaOperativo,
+  instanteDesdeHoraLocal,
   calcularFranja,
 } from './reglas-horario';
 
@@ -42,5 +43,49 @@ describe('calcularDiaOperativo', () => {
     expect(calcularDiaOperativo(local('2026-12-01T03:00'), config)).toBe(
       '2026-11-30',
     );
+  });
+});
+
+describe('instanteDesdeHoraLocal', () => {
+  it('convierte las 06:00 de Bogotá a las 11:00 UTC', () => {
+    const resultado = instanteDesdeHoraLocal(
+      '2026-11-20',
+      '06:00',
+      'America/Bogota',
+    );
+
+    expect(resultado.toISOString()).toBe('2026-11-20T11:00:00.000Z');
+  });
+
+  it('respeta una hora de inicio configurable', () => {
+    const resultado = instanteDesdeHoraLocal(
+      '2026-11-20',
+      '07:30',
+      'America/Bogota',
+    );
+
+    expect(resultado.toISOString()).toBe('2026-11-20T12:30:00.000Z');
+  });
+
+  it('respeta otras zonas horarias', () => {
+    const resultado = instanteDesdeHoraLocal(
+      '2026-11-20',
+      '06:00',
+      'America/New_York',
+    );
+
+    expect(resultado.toISOString()).toBe('2026-11-20T11:00:00.000Z');
+  });
+
+  it('rechaza una hora inexistente por cambio de horario', () => {
+    expect(() =>
+      instanteDesdeHoraLocal('2026-03-08', '02:30', 'America/New_York'),
+    ).toThrow();
+  });
+
+  it('rechaza una hora ambigua por cambio de horario', () => {
+    expect(() =>
+      instanteDesdeHoraLocal('2026-11-01', '01:30', 'America/New_York'),
+    ).toThrow();
   });
 });

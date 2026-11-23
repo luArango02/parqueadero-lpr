@@ -215,6 +215,62 @@ describe('RegistrarIngresoUseCase', () => {
     });
   });
 
+  it('con pase pagado también se bloquea si no hay espacio para su tipo (RN-11)', async () => {
+    repositorio.cobros.push({
+      id: 'pagado',
+      valor: 8000,
+      franja: 'DIURNA',
+      estado: 'PAGADO',
+      diaOperativo: '2026-11-20',
+    });
+    repositorio.placasCobro.set('pagado', 'ABC123');
+    repositorio.espaciosLibres.CARRO = [];
+    reloj.instante = local('2026-11-20T15:00');
+
+    const resultado = await casoDeUso.ejecutar({ placa: 'ABC123' });
+
+    expect(resultado).toMatchObject({
+      autorizado: false,
+      barrera: 'CERRADA',
+      motivo: 'LLENO: SIN ESPACIO PARA CARRO',
+    });
+    expect(repositorio.cobros).toHaveLength(1);
+    expect(repositorio.denegados).toHaveLength(1);
+  });
+
+  it('el lleno de una categoría no bloquea a la otra', async () => {
+    repositorio.espaciosLibres.CARRO = [];
+
+    const moto = await casoDeUso.ejecutar({ placa: 'xyz45a' });
+
+    expect(moto).toMatchObject({ autorizado: true, espacio: 'M-01' });
+  });
+
+  it('al liberarse un espacio, el reintento con pase pagado entra sin cobro nuevo (RN-11)', async () => {
+    repositorio.cobros.push({
+      id: 'pagado',
+      valor: 8000,
+      franja: 'DIURNA',
+      estado: 'PAGADO',
+      diaOperativo: '2026-11-20',
+    });
+    repositorio.placasCobro.set('pagado', 'ABC123');
+    repositorio.espaciosLibres.CARRO = [];
+    reloj.instante = local('2026-11-20T15:00');
+
+    const bloqueado = await casoDeUso.ejecutar({ placa: 'ABC123' });
+    repositorio.espaciosLibres.CARRO = ['A-01'];
+    const reintento = await casoDeUso.ejecutar({ placa: 'ABC123' });
+
+    expect(bloqueado.autorizado).toBe(false);
+    expect(reintento).toMatchObject({
+      autorizado: true,
+      reingreso: true,
+      motivo: 'REINGRESO CON PASE VIGENTE',
+    });
+    expect(repositorio.cobros).toHaveLength(1);
+  });
+
   it('pide validación manual si la confianza está bajo el umbral', async () => {
     const resultado = await casoDeUso.ejecutar({
       placa: 'ABC123',

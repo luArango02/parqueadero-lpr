@@ -13,10 +13,12 @@ import { HealthController } from './presentation/http/controllers/health.control
 import { VehiculosModule } from './vehiculos.module';
 import { CobrosModule } from './cobros.module';
 import { AlertasModule } from './alertas.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     UsuariosModule,
     TiempoRealModule,
