@@ -12,6 +12,7 @@ import { UsuariosModule } from './usuarios.module';
 import { HealthController } from './presentation/http/controllers/health.controller';
 import { VehiculosModule } from './vehiculos.module';
 import { CobrosModule } from './cobros.module';
+import { AlertasModule } from './alertas.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CobrosModule } from './cobros.module';
     CobrosModule,
     TarifasModule,
     EspaciosModule,
+    AlertasModule,
   ],
   controllers: [HealthController],
 })
