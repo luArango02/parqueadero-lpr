@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EspaciosModule } from './espacios.module';
@@ -12,6 +13,7 @@ import { UsuariosModule } from './usuarios.module';
 import { HealthController } from './presentation/http/controllers/health.controller';
 import { VehiculosModule } from './vehiculos.module';
 import { CobrosModule } from './cobros.module';
+import { PagosModule } from './pagos.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { CobrosModule } from './cobros.module';
     VehiculosModule,
     DeteccionesModule,
     CobrosModule,
+    PagosModule,
     TarifasModule,
     EspaciosModule,
   ],
