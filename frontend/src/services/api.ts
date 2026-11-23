@@ -34,3 +34,18 @@ async function post<T>(ruta: string, cuerpo: unknown): Promise<T> {
 export function registrarIngreso(placa: string, confianza: number): Promise<ResultadoIngreso> {
   return post<ResultadoIngreso>('/accesos/ingreso', { placa, confianza })
 }
+
+export interface ResultadoSalida {
+  autorizado: boolean
+  barrera: 'ABIERTA' | 'CERRADA'
+  motivo: string
+  placa: string
+  tipoVehiculo: 'CARRO' | 'MOTO' | null
+  espacioLiberado: string | null
+  minutosDentro: number | null
+  cobrosPendientes: Cobro[]
+}
+
+export function registrarSalida(placa: string, confianza: number): Promise<ResultadoSalida> {
+  return post<ResultadoSalida>('/accesos/salida', { placa, confianza })
+}

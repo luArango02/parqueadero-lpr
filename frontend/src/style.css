@@ -21,3 +21,17 @@ td {
   padding: 6px;
   text-align: left;
 }
+
+.error {
+  color: #dc3545;
+}
+
+.resultado {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 16px;
+}
+
+.resultado p {
+  margin: 6px 0;
+}
