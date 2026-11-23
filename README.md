@@ -76,6 +76,29 @@ Las claves se guardan con bcrypt y cada creación o modificación de usuarios qu
 
 Para proteger un endpoint nuevo basta con el decorador `@Autenticado()` (cualquier rol) o `@Autenticado('ADMINISTRADOR')` en el controlador o en el método.
 
+## Eventos en tiempo real (Socket.IO)
+
+El backend publica eventos por Socket.IO en el mismo puerto de la API (`http://localhost:3000`, ruta `/socket.io`). En desarrollo, el proxy de Vite ya reenvía `/socket.io`, así que desde el frontend basta con:
+
+```ts
+import { io } from 'socket.io-client'
+const socket = io()
+socket.on('ocupacion:actualizada', (datos) => { /* ... */ })
+```
+
+Los eventos se emiten solo después de guardar en la base de datos.
+
+| Evento | Cuándo | Datos |
+|---|---|---|
+| `barrera:actualizada` | En cada lectura de entrada o salida, autorizada o no | `{ carril: 'ENTRADA' \| 'SALIDA', estado: 'ABIERTA' \| 'CERRADA', motivo, placa, ocurridoEn }` |
+| `acceso:ingreso` | Cuando un vehículo entra | `{ placa, tipoVehiculo, espacio, cobro, reingreso, ocurridoEn }` |
+| `acceso:salida` | Cuando un vehículo sale | `{ placa, tipoVehiculo, espacioLiberado, minutosDentro, ocurridoEn }` |
+| `ocupacion:actualizada` | Al conectarse y después de cada ingreso o salida | `{ total, disponibles, ocupados, fueraDeServicio, porTipo: { CARRO: {...}, MOTO: {...} }, actualizadoEn }` |
+
+`cobro` es `null` o `{ id, valor, franja, estado, diaOperativo }`. `ocurridoEn` y `actualizadoEn` van en formato ISO.
+
+Para emitir desde otro módulo (por ejemplo, al poner un espacio fuera de servicio), se inyecta `EventosGateway` y se llama `emitir(EVENTOS.ocupacion, await consultaOcupacion.resumen())`.
+
 ## Cómo ejecutar el backend sin Docker (desarrollo)
 
 ```bash
