@@ -63,3 +63,60 @@ export function calcularFranja(instante: Date, config: ConfigHorario): Franja {
     minutos < aMinutos(config.inicioFranjaNocturna);
   return esDiurna ? 'DIURNA' : 'NOCTURNA';
 }
+
+/**
+ * Convierte la fecha y hora local de una sede en un instante UTC.
+ *
+ * Verifica que la hora local solicitada exista y sea única.
+ */
+export function instanteDesdeHoraLocal(
+  fecha: string,
+  hora: string,
+  zonaHoraria: string,
+): Date {
+  const [anio, mes, dia] = fecha.split('-').map(Number);
+  const [horas, minutos] = hora.split(':').map(Number);
+
+  const objetivo = Date.UTC(anio, mes - 1, dia, horas, minutos);
+
+  const formato = new Intl.DateTimeFormat('en-CA', {
+    timeZone: zonaHoraria,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+
+  const coincidencias: Date[] = [];
+
+  // Buscar dentro del intervalo de offsets UTC habituales.
+  for (let desplazamiento = -14 * 60; desplazamiento <= 14 * 60; desplazamiento += 15) {
+    const candidato = new Date(
+      objetivo - desplazamiento * 60_000,
+    );
+
+    const partes = formato.formatToParts(candidato);
+    const valor = (tipo: string) =>
+      partes.find((parte) => parte.type === tipo)?.value;
+
+    if (
+      Number(valor('year')) === anio &&
+      Number(valor('month')) === mes &&
+      Number(valor('day')) === dia &&
+      Number(valor('hour')) === horas &&
+      Number(valor('minute')) === minutos
+    ) {
+      coincidencias.push(candidato);
+    }
+  }
+
+  if (coincidencias.length !== 1) {
+    throw new Error(
+      `La hora ${fecha} ${hora} no es única o no existe en ${zonaHoraria}`,
+    );
+  }
+
+  return coincidencias[0];
+}

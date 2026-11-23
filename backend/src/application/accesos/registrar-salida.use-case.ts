@@ -84,6 +84,19 @@ export class RegistrarSalidaUseCase {
       return denegar('LA PLACA NO FIGURA ADENTRO');
     }
 
+    await this.repositorio.garantizarCobrosPorCambioDeDia({
+      sedeId: sede.id,
+      placa,
+      vehiculoId: permanencia.vehiculoId,
+      tipo: permanencia.tipo,
+      ingresoEn: permanencia.ingresoEn,
+      verificadoEn: ahora,
+      zonaHoraria: sede.zonaHoraria,
+      inicioDiaOperativo: sede.inicioDiaOperativo,
+      inicioFranjaDiurna: sede.inicioFranjaDiurna,
+      inicioFranjaNocturna: sede.inicioFranjaNocturna,
+    });
+
     // Se revisan todos los cobros pendientes de la placa, no solo el de hoy:
     // un carro que entró ayer y no pagó tampoco puede salir.
     const pendientes = await this.repositorio.cobrosPendientes(placa, sede.id);

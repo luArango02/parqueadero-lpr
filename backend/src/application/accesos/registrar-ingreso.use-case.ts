@@ -96,6 +96,14 @@ export class RegistrarIngresoUseCase {
       return denegar('PLACA NO RECONOCIDA: REQUIERE VALIDACIÓN MANUAL', null);
     }
 
+    // RN-13 / TC-15: mientras una discrepancia carro/moto siga abierta, no se asigna espacio.
+    if (await this.repositorio.alertaAbierta(placa, 'DISCREPANCIA_TIPO')) {
+      return denegar(
+        'DISCREPANCIA CARRO/MOTO: REQUIERE VALIDACIÓN DEL OPERADOR',
+        tipo,
+      );
+    }
+
     if (await this.repositorio.estaAdentro(placa)) {
       return denegar('LA PLACA YA FIGURA ADENTRO (ANTI-PASSBACK)', tipo, true);
     }
