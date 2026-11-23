@@ -1,3 +1,4 @@
+import { NotificadorAccesos } from './notificador-accesos';
 import { Reloj } from '../../domain/tiempo/reloj';
 import { CobroDelDia, SedeOperativa } from './ingreso.repositorio';
 import { RegistrarSalidaUseCase } from './registrar-salida.use-case';
@@ -69,6 +70,17 @@ class RepositorioEnMemoria implements SalidaRepositorio {
   }
 }
 
+class NotificadorFalso implements NotificadorAccesos {
+  avisos: { autorizado: boolean; motivo: string }[] = [];
+  ingresoRegistrado(r: { autorizado: boolean; motivo: string }) {
+    this.avisos.push({ autorizado: r.autorizado, motivo: r.motivo });
+    return Promise.resolve();
+  }
+  salidaRegistrada(r: { autorizado: boolean; motivo: string }) {
+    return this.ingresoRegistrado(r);
+  }
+}
+
 class RelojFijo implements Reloj {
   constructor(public instante: Date) {}
   ahora(): Date {
@@ -80,12 +92,14 @@ const local = (fechaHora: string) => new Date(`${fechaHora}:00-05:00`);
 
 describe('RegistrarSalidaUseCase', () => {
   let repositorio: RepositorioEnMemoria;
+  let notificador: NotificadorFalso;
   let casoDeUso: RegistrarSalidaUseCase;
 
   beforeEach(() => {
     repositorio = new RepositorioEnMemoria();
     const reloj = new RelojFijo(local('2026-11-20T10:30'));
-    casoDeUso = new RegistrarSalidaUseCase(repositorio, reloj);
+    notificador = new NotificadorFalso();
+    casoDeUso = new RegistrarSalidaUseCase(repositorio, reloj, notificador);
   });
 
   it('una moto sale sin cobro y libera su espacio', async () => {
@@ -170,5 +184,18 @@ describe('RegistrarSalidaUseCase', () => {
 
     expect(segunda.barrera).toBe('CERRADA');
     expect(repositorio.espaciosLibres).toEqual(['M-01']);
+  });
+
+  it('avisa la salida solo cuando ya quedó registrada', async () => {
+    repositorio.estacionar('XYZ45A', 'MOTO', 'M-01');
+    const espaciosAlAvisar: string[][] = [];
+    notificador.salidaRegistrada = () => {
+      espaciosAlAvisar.push([...repositorio.espaciosLibres]);
+      return Promise.resolve();
+    };
+
+    await casoDeUso.ejecutar({ placa: 'XYZ45A' });
+
+    expect(espaciosAlAvisar).toEqual([['M-01']]);
   });
 });

@@ -5,6 +5,8 @@ import { TipoVehiculo, normalizarPlaca } from '../../domain/vehiculos/placa';
 import type { CobroDelDia } from './ingreso.repositorio';
 import { SALIDA_REPOSITORIO } from './salida.repositorio';
 import type { SalidaRepositorio } from './salida.repositorio';
+import { NOTIFICADOR_ACCESOS } from './notificador-accesos';
+import type { NotificadorAccesos } from './notificador-accesos';
 
 export interface SolicitudSalida {
   placa: string;
@@ -29,9 +31,18 @@ export class RegistrarSalidaUseCase {
     @Inject(SALIDA_REPOSITORIO)
     private readonly repositorio: SalidaRepositorio,
     @Inject(RELOJ) private readonly reloj: Reloj,
+    @Inject(NOTIFICADOR_ACCESOS)
+    private readonly notificador: NotificadorAccesos,
   ) {}
 
   async ejecutar(solicitud: SolicitudSalida): Promise<ResultadoSalida> {
+    const resultado = await this.decidir(solicitud);
+    // decidir() ya persistió (también los rechazos), así que el aviso nunca se adelanta a la base de datos.
+    await this.notificador.salidaRegistrada(resultado);
+    return resultado;
+  }
+
+  private async decidir(solicitud: SolicitudSalida): Promise<ResultadoSalida> {
     const ahora = this.reloj.ahora();
     const placa = normalizarPlaca(solicitud.placa);
     const sede = await this.repositorio.sedeOperativa();

@@ -1,3 +1,4 @@
+import { NotificadorAccesos } from './notificador-accesos';
 import { Franja } from '../../domain/tiempo/reglas-horario';
 import { Reloj } from '../../domain/tiempo/reloj';
 import { TipoVehiculo } from '../../domain/vehiculos/placa';
@@ -91,6 +92,17 @@ class RepositorioEnMemoria implements IngresoRepositorio {
   }
 }
 
+class NotificadorFalso implements NotificadorAccesos {
+  avisos: { autorizado: boolean; motivo: string }[] = [];
+  ingresoRegistrado(r: { autorizado: boolean; motivo: string }) {
+    this.avisos.push({ autorizado: r.autorizado, motivo: r.motivo });
+    return Promise.resolve();
+  }
+  salidaRegistrada(r: { autorizado: boolean; motivo: string }) {
+    return this.ingresoRegistrado(r);
+  }
+}
+
 class RelojFijo implements Reloj {
   constructor(public instante: Date) {}
   ahora(): Date {
@@ -103,12 +115,14 @@ const local = (fechaHora: string) => new Date(`${fechaHora}:00-05:00`);
 describe('RegistrarIngresoUseCase', () => {
   let repositorio: RepositorioEnMemoria;
   let reloj: RelojFijo;
+  let notificador: NotificadorFalso;
   let casoDeUso: RegistrarIngresoUseCase;
 
   beforeEach(() => {
     repositorio = new RepositorioEnMemoria();
     reloj = new RelojFijo(local('2026-11-20T08:00'));
-    casoDeUso = new RegistrarIngresoUseCase(repositorio, reloj);
+    notificador = new NotificadorFalso();
+    casoDeUso = new RegistrarIngresoUseCase(repositorio, reloj, notificador);
   });
 
   it('una moto entra sin cobro (RN-01)', async () => {
@@ -212,5 +226,19 @@ describe('RegistrarIngresoUseCase', () => {
 
     expect(resultado.autorizado).toBe(false);
     expect(resultado.motivo).toContain('PLACA NO RECONOCIDA');
+  });
+
+  it('avisa en tiempo real después de guardar, también cuando niega el paso', async () => {
+    await casoDeUso.ejecutar({ placa: 'ABC123' });
+    await casoDeUso.ejecutar({ placa: 'ABC123' });
+
+    expect(notificador.avisos).toEqual([
+      { autorizado: true, motivo: 'INGRESO CON COBRO DIURNA PENDIENTE' },
+      {
+        autorizado: false,
+        motivo: 'LA PLACA YA FIGURA ADENTRO (ANTI-PASSBACK)',
+      },
+    ]);
+    expect(repositorio.denegados).toHaveLength(1);
   });
 });
