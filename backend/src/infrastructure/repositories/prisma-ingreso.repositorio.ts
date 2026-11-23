@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Cobro, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   CobroDelDia,
   DatosDenegado,
@@ -12,49 +12,23 @@ import {
 import { Franja } from '../../domain/tiempo/reglas-horario';
 import { TipoVehiculo } from '../../domain/vehiculos/placa';
 import { PrismaService } from '../database/prisma.service';
-
-// En la base de datos el día operativo es una columna DATE.
-function aFecha(dia: string): Date {
-  return new Date(`${dia}T00:00:00Z`);
-}
-
-function aCobroDelDia(cobro: Cobro): CobroDelDia {
-  return {
-    id: cobro.id,
-    valor: cobro.valor.toNumber(),
-    franja: cobro.franja,
-    estado: cobro.estado,
-    diaOperativo: cobro.diaOperativo.toISOString().slice(0, 10),
-  };
-}
+import {
+  aCobroDelDia,
+  aFecha,
+  buscarCarril,
+  buscarSedeOperativa,
+} from './consultas-comunes';
 
 @Injectable()
 export class PrismaIngresoRepositorio implements IngresoRepositorio {
   constructor(private readonly prisma: PrismaService) {}
 
-  async sedeOperativa(): Promise<SedeOperativa> {
-    const sede = await this.prisma.sede.findFirst({
-      orderBy: { nombre: 'asc' },
-    });
-    if (!sede) {
-      throw new NotFoundException('No hay sede configurada: ejecute el seed');
-    }
-    return sede;
+  sedeOperativa(): Promise<SedeOperativa> {
+    return buscarSedeOperativa(this.prisma);
   }
 
-  async carrilDeEntrada(sedeId: string, carrilId?: string): Promise<string> {
-    const carril = await this.prisma.carril.findFirst({
-      where: {
-        sedeId,
-        sentido: 'ENTRADA',
-        ...(carrilId ? { id: carrilId } : {}),
-      },
-      orderBy: { nombre: 'asc' },
-    });
-    if (!carril) {
-      throw new NotFoundException('Carril de entrada no encontrado');
-    }
-    return carril.id;
+  carrilDeEntrada(sedeId: string, carrilId?: string): Promise<string> {
+    return buscarCarril(this.prisma, sedeId, 'ENTRADA', carrilId);
   }
 
   async tipoRegistrado(placa: string): Promise<TipoVehiculo | null> {
