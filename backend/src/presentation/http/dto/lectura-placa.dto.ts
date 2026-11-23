@@ -1,4 +1,8 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsNumber,
@@ -9,7 +13,8 @@ import {
   Min,
 } from 'class-validator';
 
-export class RegistrarIngresoDto {
+// Lo que envía el carril (entrada o salida) cuando la cámara lee una placa.
+export class LecturaPlacaDto {
   @ApiProperty({
     example: 'ABC123',
     description: 'Placa leída por la cámara o el simulador',
@@ -28,9 +33,9 @@ export class RegistrarIngresoDto {
   @Max(1)
   confianza?: number;
 
-  @ApiPropertyOptional({
-    description: 'Carril de entrada; si se omite se usa el primero de la sede',
-  })
+  // Oculto en Swagger: el ejemplo autogenerado ("string") no es un UUID y la petición fallaba.
+  // Si se omite se usa el primer carril de la sede.
+  @ApiHideProperty()
   @IsOptional()
   @IsUUID()
   carrilId?: string;
