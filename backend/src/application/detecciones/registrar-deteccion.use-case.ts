@@ -1,11 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
+import {
+  detalleDiscrepancia,
+  hayDiscrepancia,
+} from '../../domain/alertas/alerta';
 import { estadoSegunConfianza } from '../../domain/detecciones/deteccion';
 import { RELOJ } from '../../domain/tiempo/reloj';
 import type { Reloj } from '../../domain/tiempo/reloj';
-import { TipoVehiculo } from '../../domain/vehiculos/placa';
+import {
+  TipoVehiculo,
+  clasificarPorFormato,
+} from '../../domain/vehiculos/placa';
 import { DETECCION_REPOSITORIO } from './deteccion.repositorio';
 import type {
-  DeteccionRegistrada,
+  DatosDiscrepancia,
+  DeteccionGuardada,
   DeteccionRepositorio,
 } from './deteccion.repositorio';
 import { LECTOR_PLACAS } from './lector-placas';
@@ -19,7 +27,7 @@ export interface SolicitudDeteccion {
   ocurridaEn?: Date;
 }
 
-export interface ResultadoDeteccion extends DeteccionRegistrada {
+export interface ResultadoDeteccion extends DeteccionGuardada {
   umbralAplicado: number;
 }
 
@@ -47,15 +55,44 @@ export class RegistrarDeteccionUseCase {
       tipoVisual: solicitud.tipoVisual,
     });
 
-    const deteccion = await this.repositorio.guardar({
-      carrilId,
-      placaLeida: lectura.placa,
-      confianza: lectura.confianza,
-      tipoVisual: lectura.tipoVisual,
-      origen: lectura.origen,
-      estado: estadoSegunConfianza(lectura.confianza, sede.umbralConfianza),
-      ocurridaEn: lectura.ocurridaEn,
-    });
+    const estado = estadoSegunConfianza(
+      lectura.confianza,
+      sede.umbralConfianza,
+    );
+
+    // RN-13: solo se compara una lectura confiable; si la placa es dudosa, primero la valida el operador.
+    let discrepancia: DatosDiscrepancia | null = null;
+    const tipoVisual = lectura.tipoVisual;
+    if (estado === 'ACEPTADA' && tipoVisual) {
+      const tipoPorPlaca =
+        (await this.repositorio.tipoRegistrado(lectura.placa)) ??
+        clasificarPorFormato(lectura.placa);
+      if (tipoPorPlaca && hayDiscrepancia(tipoPorPlaca, tipoVisual)) {
+        discrepancia = {
+          sedeId: sede.id,
+          placa: lectura.placa,
+          detalle: detalleDiscrepancia(
+            lectura.placa,
+            tipoPorPlaca,
+            tipoVisual,
+            lectura.confianza,
+          ),
+        };
+      }
+    }
+
+    const deteccion = await this.repositorio.guardar(
+      {
+        carrilId,
+        placaLeida: lectura.placa,
+        confianza: lectura.confianza,
+        tipoVisual: lectura.tipoVisual,
+        origen: lectura.origen,
+        estado,
+        ocurridaEn: lectura.ocurridaEn,
+      },
+      discrepancia,
+    );
     return { ...deteccion, umbralAplicado: sede.umbralConfianza };
   }
 }
