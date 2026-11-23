@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   DatosDeteccion,
-  DeteccionRegistrada,
+  DatosDiscrepancia,
+  DeteccionGuardada,
   DeteccionRepositorio,
   SedeDeLectura,
 } from '../../application/detecciones/deteccion.repositorio';
+import { TipoVehiculo } from '../../domain/vehiculos/placa';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -34,17 +36,44 @@ export class PrismaDeteccionRepositorio implements DeteccionRepositorio {
     return carril.id;
   }
 
-  async guardar(datos: DatosDeteccion): Promise<DeteccionRegistrada> {
-    const deteccion = await this.prisma.deteccion.create({ data: datos });
-    return {
-      id: deteccion.id,
-      carrilId: deteccion.carrilId,
-      placaLeida: deteccion.placaLeida,
-      confianza: deteccion.confianza,
-      tipoVisual: deteccion.tipoVisual,
-      origen: deteccion.origen,
-      estado: deteccion.estado,
-      ocurridaEn: deteccion.ocurridaEn,
-    };
+  async tipoRegistrado(placa: string): Promise<TipoVehiculo | null> {
+    const vehiculo = await this.prisma.vehiculo.findUnique({
+      where: { placa },
+      select: { tipo: true },
+    });
+    return vehiculo?.tipo ?? null;
+  }
+
+  guardar(
+    datos: DatosDeteccion,
+    discrepancia: DatosDiscrepancia | null,
+  ): Promise<DeteccionGuardada> {
+    // La detección y su alerta se guardan juntas: la alerta apunta a la detección como evidencia.
+    return this.prisma.$transaction(async (tx): Promise<DeteccionGuardada> => {
+      const deteccion = await tx.deteccion.create({ data: datos });
+      const alerta = discrepancia
+        ? await tx.alerta.create({
+            data: {
+              sedeId: discrepancia.sedeId,
+              tipo: 'DISCREPANCIA_TIPO',
+              placa: discrepancia.placa,
+              detalle: discrepancia.detalle,
+              deteccionId: deteccion.id,
+            },
+            select: { id: true },
+          })
+        : null;
+      return {
+        id: deteccion.id,
+        carrilId: deteccion.carrilId,
+        placaLeida: deteccion.placaLeida,
+        confianza: deteccion.confianza,
+        tipoVisual: deteccion.tipoVisual,
+        origen: deteccion.origen,
+        estado: deteccion.estado,
+        ocurridaEn: deteccion.ocurridaEn,
+        alertaId: alerta?.id ?? null,
+      };
+    });
   }
 }

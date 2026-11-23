@@ -6,15 +6,20 @@ import {
 import {
   DatosSalida,
   DatosSalidaDenegada,
+  DatosVerificacionCobros,
   PermanenciaActiva,
   SalidaRepositorio,
 } from '../../application/accesos/salida.repositorio';
 import { PrismaService } from '../database/prisma.service';
 import {
   aCobroDelDia,
+  aFecha,
   buscarCarril,
   buscarSedeOperativa,
 } from './consultas-comunes';
+import { Prisma } from '@prisma/client';
+import { diasOperativosTranscurridos } from '../../domain/tiempo/dias-operativos-transcurridos';
+import { instanteDesdeHoraLocal } from '../../domain/tiempo/reglas-horario';
 
 @Injectable()
 export class PrismaSalidaRepositorio implements SalidaRepositorio {
@@ -42,6 +47,137 @@ export class PrismaSalidaRepositorio implements SalidaRepositorio {
       espacioCodigo: permanencia.espacio.codigo,
       ingresoEn: permanencia.ingresoEn,
     };
+  }
+
+  async garantizarCobrosPorCambioDeDia(
+    datos: DatosVerificacionCobros,
+  ): Promise<void> {
+    // Las motocicletas están exentas de cobro.
+    if (datos.tipo === 'MOTO') {
+      return;
+    }
+
+    const horario = {
+      zonaHoraria: datos.zonaHoraria,
+      inicioDiaOperativo: datos.inicioDiaOperativo,
+      inicioFranjaDiurna: datos.inicioFranjaDiurna,
+      inicioFranjaNocturna: datos.inicioFranjaNocturna,
+    };
+
+    const dias = diasOperativosTranscurridos(
+      datos.ingresoEn,
+      datos.verificadoEn,
+      horario,
+    );
+
+    for (const diaOperativo of dias) {
+      const fechaDia = aFecha(diaOperativo);
+
+      // Si el cobro ya existe, se conserva sin modificarlo.
+      const existente = await this.prisma.cobro.findUnique({
+        where: {
+          placa_sedeId_diaOperativo: {
+            placa: datos.placa,
+            sedeId: datos.sedeId,
+            diaOperativo: fechaDia,
+          },
+        },
+      });
+
+      if (existente) {
+        continue;
+      }
+
+      // El instante del cambio de día en Colombia (06:00).
+      // ACT-020 se implementa para la sede America/Bogota.
+      const inicioNuevoDia = instanteDesdeHoraLocal(
+        diaOperativo,
+        datos.inicioDiaOperativo,
+        datos.zonaHoraria,
+      );
+
+      const tarifa = await this.prisma.tarifa.findFirst({
+        where: {
+          sedeId: datos.sedeId,
+          tipoVehiculo: datos.tipo,
+          franja: 'DIURNA',
+          vigenteDesde: { lte: inicioNuevoDia },
+          OR: [
+            { vigenteHasta: null },
+            { vigenteHasta: { gt: inicioNuevoDia } },
+          ],
+        },
+        orderBy: { version: 'desc' },
+      });
+
+      if (!tarifa) {
+        throw new Error(
+          `No existe tarifa diurna vigente para ${datos.tipo} ` +
+            `en el día operativo ${diaOperativo}`,
+        );
+      }
+
+      if (tarifa.valor.lte(0)) {
+        continue;
+      }
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          const cobro = await tx.cobro.create({
+            data: {
+              sedeId: datos.sedeId,
+              vehiculoId: datos.vehiculoId,
+              placa: datos.placa,
+              diaOperativo: fechaDia,
+              franja: 'DIURNA',
+              tarifaId: tarifa.id,
+              valor: tarifa.valor,
+              generadoEn: datos.verificadoEn,
+            },
+          });
+
+          await tx.auditoria.create({
+            data: {
+              accion: 'COBRO_CAMBIO_DIA_OPERATIVO',
+              entidad: 'Cobro',
+              entidadId: cobro.id,
+              datosNuevos: {
+                placa: datos.placa,
+                sedeId: datos.sedeId,
+                diaOperativo,
+                franja: 'DIURNA',
+                tarifaId: tarifa.id,
+                valor: tarifa.valor.toString(),
+              },
+              ocurridaEn: datos.verificadoEn,
+            },
+          });
+        });
+      } catch (error) {
+        // Dos solicitudes concurrentes pueden intentar generar
+        // el mismo cobro. La restricción única impide duplicarlo.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          const creadoPorOtraSolicitud = await this.prisma.cobro.findUnique({
+            where: {
+              placa_sedeId_diaOperativo: {
+                placa: datos.placa,
+                sedeId: datos.sedeId,
+                diaOperativo: fechaDia,
+              },
+            },
+          });
+
+          if (creadoPorOtraSolicitud) {
+            continue;
+          }
+        }
+
+        throw error;
+      }
+    }
   }
 
   async cobrosPendientes(

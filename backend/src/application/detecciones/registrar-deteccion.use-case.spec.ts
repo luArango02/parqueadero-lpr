@@ -1,7 +1,10 @@
 import { OrigenLectura } from '../../domain/detecciones/deteccion';
 import { Reloj } from '../../domain/tiempo/reloj';
+import { TipoVehiculo } from '../../domain/vehiculos/placa';
 import {
   DatosDeteccion,
+  DatosDiscrepancia,
+  DeteccionGuardada,
   DeteccionRegistrada,
   DeteccionRepositorio,
   SedeDeLectura,
@@ -30,6 +33,8 @@ function crearLector(origen: OrigenLectura): LectorPlacas {
 class RepositorioEnMemoria implements DeteccionRepositorio {
   umbral = 0.8;
   guardadas: DeteccionRegistrada[] = [];
+  alertas: DatosDiscrepancia[] = [];
+  registrados = new Map<string, TipoVehiculo>();
 
   sedeDeLectura(): Promise<SedeDeLectura> {
     return Promise.resolve({ id: 'sede-1', umbralConfianza: this.umbral });
@@ -39,10 +44,21 @@ class RepositorioEnMemoria implements DeteccionRepositorio {
     return Promise.resolve(carrilId ?? 'carril-entrada');
   }
 
-  guardar(datos: DatosDeteccion): Promise<DeteccionRegistrada> {
+  tipoRegistrado(placa: string): Promise<TipoVehiculo | null> {
+    return Promise.resolve(this.registrados.get(placa) ?? null);
+  }
+
+  guardar(
+    datos: DatosDeteccion,
+    discrepancia: DatosDiscrepancia | null,
+  ): Promise<DeteccionGuardada> {
     const deteccion = { id: `det-${this.guardadas.length + 1}`, ...datos };
     this.guardadas.push(deteccion);
-    return Promise.resolve(deteccion);
+    if (discrepancia) this.alertas.push(discrepancia);
+    return Promise.resolve({
+      ...deteccion,
+      alertaId: discrepancia ? `alerta-${this.alertas.length}` : null,
+    });
   }
 }
 
@@ -146,5 +162,68 @@ describe('RegistrarDeteccionUseCase', () => {
 
     expect(simulada.origen).toBe('SIMULADOR');
     expect(real.origen).toBe('OCR');
+  });
+
+  it('una discrepancia entre la placa y el tipo visual guarda una alerta con la evidencia', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.95,
+      tipoVisual: 'MOTO',
+    });
+
+    expect(resultado.alertaId).not.toBeNull();
+    expect(repositorio.alertas).toHaveLength(1);
+    expect(repositorio.alertas[0].placa).toBe('ABC123');
+    expect(repositorio.alertas[0].detalle).toContain('CARRO');
+    expect(repositorio.alertas[0].detalle).toContain('MOTO');
+  });
+
+  it('sin discrepancia no hay alerta, tenga o no tipo visual', async () => {
+    const coincide = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.95,
+      tipoVisual: 'CARRO',
+    });
+    const sinVisual = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.95,
+    });
+
+    expect(coincide.alertaId).toBeNull();
+    expect(sinVisual.alertaId).toBeNull();
+    expect(repositorio.alertas).toHaveLength(0);
+  });
+
+  it('el tipo registrado del vehículo prevalece sobre el formato de la placa', async () => {
+    repositorio.registrados.set('ABC123', 'MOTO');
+
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.95,
+      tipoVisual: 'MOTO',
+    });
+
+    expect(resultado.alertaId).toBeNull();
+  });
+
+  it('no compara una lectura dudosa: primero la valida el operador', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.5,
+      tipoVisual: 'MOTO',
+    });
+
+    expect(resultado.estado).toBe('PENDIENTE_REVISION');
+    expect(resultado.alertaId).toBeNull();
+  });
+
+  it('si la placa no permite deducir el tipo, no hay alerta', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'AB1234',
+      confianza: 0.95,
+      tipoVisual: 'MOTO',
+    });
+
+    expect(resultado.alertaId).toBeNull();
   });
 });
