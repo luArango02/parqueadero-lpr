@@ -104,3 +104,39 @@ describe('disponibilidadPorZona', () => {
     expect(zonas[1].lleno).toBe(false);
   });
 });
+
+describe('coherencia entre zonas y tipos', () => {
+  it('la suma de las zonas de un tipo coincide con el total de ese tipo', () => {
+    const conteos = [
+      conteo('A', 'CARRO', 'DISPONIBLE', 6),
+      conteo('A', 'CARRO', 'OCUPADO', 3),
+      conteo('B', 'CARRO', 'DISPONIBLE', 2),
+      conteo('B', 'CARRO', 'FUERA_DE_SERVICIO', 1),
+      conteo('M', 'MOTO', 'OCUPADO', 4),
+    ];
+
+    const porTipo = cuposPorTipo(conteos);
+    const porZona = disponibilidadPorZona(conteos);
+
+    for (const cupo of porTipo) {
+      const zonas = porZona.filter((z) => z.tipo === cupo.tipo);
+      const sumar = (campo: 'total' | 'disponibles' | 'ocupados') =>
+        zonas.reduce((suma, z) => suma + z[campo], 0);
+      expect(sumar('total')).toBe(cupo.total);
+      expect(sumar('disponibles')).toBe(cupo.disponibles);
+      expect(sumar('ocupados')).toBe(cupo.ocupados);
+    }
+  });
+
+  it('en cada categoría, disponibles + ocupados + fuera de servicio = total', () => {
+    const cupos = cuposPorTipo([
+      conteo('A', 'CARRO', 'DISPONIBLE', 5),
+      conteo('A', 'CARRO', 'OCUPADO', 4),
+      conteo('A', 'CARRO', 'FUERA_DE_SERVICIO', 1),
+    ]);
+
+    for (const c of cupos) {
+      expect(c.disponibles + c.ocupados + c.fueraDeServicio).toBe(c.total);
+    }
+  });
+});

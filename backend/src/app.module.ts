@@ -1,4 +1,3 @@
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EspaciosModule } from './espacios.module';
@@ -16,6 +15,7 @@ import { CobrosModule } from './cobros.module';
 import { PagosModule } from './pagos.module';
 import { AlertasModule } from './alertas.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventosModule } from './eventos.module';
 
 @Module({
   imports: [
@@ -32,6 +32,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     TarifasModule,
     EspaciosModule,
     AlertasModule,
+    EventosModule,
   ],
   controllers: [HealthController],
 })

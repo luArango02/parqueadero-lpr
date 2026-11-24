@@ -1,4 +1,5 @@
 import type { Espacio } from '../mapa/espacios'
+import type { Cupo, EventoReciente } from '../panel/ocupacion'
 
 export interface Cobro {
   id: string
@@ -64,4 +65,13 @@ async function get<T>(ruta: string): Promise<T> {
 
 export function obtenerEspacios(): Promise<Espacio[]> {
   return get<Espacio[]>('/espacios')
+}
+
+
+export function obtenerCupos(): Promise<Cupo[]> {
+  return get<Cupo[]>('/cupos')
+}
+
+export function obtenerEventosRecientes(limite = 20): Promise<EventoReciente[]> {
+  return get<EventoReciente[]>(`/eventos/recientes?limite=${limite}`)
 }
