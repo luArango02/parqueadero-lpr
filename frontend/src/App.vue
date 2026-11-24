@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import IndicadorConexion from './components/IndicadorConexion.vue'
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import { RouterLink, RouterView } from 'vue-router'
       <RouterLink to="/mapa">Mapa</RouterLink>
       <RouterLink to="/panel">Panel</RouterLink>
     </nav>
+    <IndicadorConexion />
   </header>
   <main>
     <RouterView />

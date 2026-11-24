@@ -1,10 +1,15 @@
 <script setup lang="ts">
-defineProps<{ estado: 'ABIERTA' | 'CERRADA' | null }>()
+defineProps<{
+  estado: 'ABIERTA' | 'CERRADA' | null
+  /** Última lectura del carril (placa y motivo), si la hay. */
+  detalle?: string
+}>()
 </script>
 
 <template>
-  <div class="estado" :class="estado?.toLowerCase()">
+  <div class="estado" :class="estado?.toLowerCase()" data-testid="barrera">
     {{ estado ? `Barrera ${estado.toLowerCase()}` : 'Esperando vehículo' }}
+    <small v-if="detalle" class="detalle">{{ detalle }}</small>
   </div>
 </template>
 
@@ -17,6 +22,12 @@ defineProps<{ estado: 'ABIERTA' | 'CERRADA' | null }>()
   font-weight: bold;
   text-align: center;
   background: #f2f2f2;
+}
+.detalle {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: normal;
 }
 .abierta {
   background: #d4edda;

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { io, type Socket } from 'socket.io-client'
+import { computed, onMounted, ref } from 'vue'
 import EspacioCelda from '../components/EspacioCelda.vue'
 import {
   agruparPorZona,
@@ -11,14 +10,12 @@ import {
   type Espacio,
 } from '../mapa/espacios'
 import { obtenerEspacios } from '../services/api'
+import { useTiempoReal } from '../tiempoReal/useTiempoReal'
 
 const espacios = ref<Espacio[]>([])
 const cargando = ref(true)
 const error = ref('')
-const enVivo = ref(false)
 const zonas = computed(() => agruparPorZona(espacios.value))
-
-let socket: Socket | null = null
 
 async function cargar() {
   try {
@@ -31,32 +28,22 @@ async function cargar() {
   }
 }
 
-onMounted(() => {
-  cargar()
-  // Mismo origen: el proxy de Vite reenvía /socket.io al backend.
-  socket = io()
-  socket.on('connect', () => (enVivo.value = true))
-  socket.on('disconnect', () => (enVivo.value = false))
-  // Si se perdieron eventos mientras no había conexión, se vuelve a pedir el estado real.
-  socket.io.on('reconnect', cargar)
-  socket.on('acceso:ingreso', (evento) => {
-    espacios.value = aplicarIngreso(espacios.value, evento)
-  })
-  socket.on('acceso:salida', (evento) => {
-    espacios.value = aplicarSalida(espacios.value, evento)
-  })
+const { alEvento, alReconectar } = useTiempoReal()
+
+// Si la conexión se cae y vuelve, se piden de nuevo los espacios por si se perdió algún evento.
+alReconectar(cargar)
+alEvento('acceso:ingreso', (evento) => {
+  espacios.value = aplicarIngreso(espacios.value, evento)
+})
+alEvento('acceso:salida', (evento) => {
+  espacios.value = aplicarSalida(espacios.value, evento)
 })
 
-onUnmounted(() => socket?.disconnect())
+onMounted(cargar)
 </script>
 
 <template>
   <h1>Mapa de espacios</h1>
-
-  <p class="conexion" :class="{ activa: enVivo }">
-    {{ enVivo ? 'Actualización en vivo' : 'Sin conexión en vivo' }}
-  </p>
-
   <ul class="leyenda" aria-label="Leyenda">
     <li v-for="estado in ESTADOS_LEYENDA" :key="estado">
       <span class="muestra" :class="ESTADOS_VISUALES[estado].clase"></span>
@@ -83,13 +70,6 @@ onUnmounted(() => socket?.disconnect())
 </template>
 
 <style scoped>
-.conexion {
-  font-size: 14px;
-  color: #6c757d;
-}
-.conexion.activa {
-  color: #155724;
-}
 .leyenda {
   display: flex;
   flex-wrap: wrap;

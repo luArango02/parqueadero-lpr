@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { io, type Socket } from 'socket.io-client'
 import TarjetaCategoria from '../components/TarjetaCategoria.vue'
 import { EVENTOS_VISUALES, type Cupo, type EventoReciente } from '../panel/ocupacion'
 import { obtenerCupos, obtenerEventosRecientes } from '../services/api'
+import { useTiempoReal } from '../tiempoReal/useTiempoReal'
 
 // Los pagos y las alertas no emiten eventos de socket: este intervalo los recoge.
 const INTERVALO_MS = 15000
@@ -14,7 +14,6 @@ const cargando = ref(true)
 const error = ref('')
 const actualizadoEn = ref('')
 
-let socket: Socket | null = null
 let temporizador: ReturnType<typeof setInterval> | undefined
 
 async function refrescar() {
@@ -38,20 +37,18 @@ function hora(iso: string): string {
   return new Date(iso).toLocaleTimeString('es-CO')
 }
 
+const { alEvento, alReconectar } = useTiempoReal()
+
+// Cada intento del carril (autorizado o denegado) llega ya guardado en la base de datos.
+alEvento('barrera:actualizada', refrescar)
+alReconectar(refrescar)
+
 onMounted(() => {
   refrescar()
   temporizador = setInterval(refrescar, INTERVALO_MS)
-  // Mismo origen: el proxy de Vite reenvía /socket.io al backend.
-  socket = io()
-  // Se emite en cada intento del carril (autorizado o denegado), ya guardado en la base de datos.
-  socket.on('barrera:actualizada', refrescar)
-  socket.io.on('reconnect', refrescar)
 })
 
-onUnmounted(() => {
-  clearInterval(temporizador)
-  socket?.disconnect()
-})
+onUnmounted(() => clearInterval(temporizador))
 </script>
 
 <template>
