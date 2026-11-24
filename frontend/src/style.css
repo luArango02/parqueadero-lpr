@@ -35,3 +35,19 @@ td {
 .resultado p {
   margin: 6px 0;
 }
+
+.libre {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #155724;
+}
+.ocupado {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+.fuera {
+  background: #e2e3e5;
+  border-color: #6c757d;
+  color: #383d41;
+}

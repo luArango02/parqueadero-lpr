@@ -3,7 +3,7 @@ import { EstadoEspacio, normalizarZona } from '../../domain/espacios/espacio';
 import { TipoVehiculo } from '../../domain/vehiculos/placa';
 import { ESPACIO_REPOSITORIO } from './espacio.repositorio';
 import type {
-  EspacioRegistrado,
+  EspacioConPlaca,
   EspacioRepositorio,
 } from './espacio.repositorio';
 
@@ -20,7 +20,7 @@ export class ListarEspaciosUseCase {
     private readonly repositorio: EspacioRepositorio,
   ) {}
 
-  async ejecutar(consulta: ConsultaEspacios): Promise<EspacioRegistrado[]> {
+  async ejecutar(consulta: ConsultaEspacios): Promise<EspacioConPlaca[]> {
     const sedeId = await this.repositorio.idSedeActual();
     if (!sedeId) {
       throw new NotFoundException('No hay sede configurada: ejecute el seed');

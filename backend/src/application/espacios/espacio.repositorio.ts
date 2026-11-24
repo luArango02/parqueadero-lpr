@@ -34,6 +34,19 @@ export interface EspacioRegistrado {
   estado: EstadoEspacio;
 }
 
+export interface EspacioRegistrado {
+  id: string;
+  codigo: string;
+  zona: string;
+  tipoCompatible: TipoVehiculo;
+  estado: EstadoEspacio;
+}
+
+/** Lo que muestra el mapa: el espacio y, si está ocupado, la placa del vehículo que tiene adentro. */
+export interface EspacioConPlaca extends EspacioRegistrado {
+  placa: string | null;
+}
+
 export interface FiltroEspacios {
   zona?: string;
   tipo?: TipoVehiculo;
@@ -54,7 +67,7 @@ export interface CambiosEspacio {
 export interface EspacioRepositorio {
   sedeActual(): Promise<SedeActual | null>;
   idSedeActual(): Promise<string | null>;
-  listar(sedeId: string, filtro: FiltroEspacios): Promise<EspacioRegistrado[]>;
+  listar(sedeId: string, filtro: FiltroEspacios): Promise<EspacioConPlaca[]>;
   /** Devuelve null si el código ya existe en la sede. */
   crear(sedeId: string, datos: DatosEspacio): Promise<EspacioRegistrado | null>;
   buscar(id: string): Promise<EspacioRegistrado | null>;
