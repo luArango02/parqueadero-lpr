@@ -30,8 +30,9 @@ import { ActualizarEspacioDto } from '../dto/actualizar-espacio.dto';
 import { CrearEspacioDto } from '../dto/crear-espacio.dto';
 import { ListarEspaciosQueryDto } from '../dto/listar-espacios.query.dto';
 import { NotificarOcupacionInterceptor } from '../../../infrastructure/tiempo-real/notificar-ocupacion.interceptor';
-import { Auditar } from '../auditoria/auditar.decorator';
 import { Autenticado } from '../auth/autenticado.decorator';
+import { UsuarioActual } from '../auth/usuario-actual.decorator';
+import type { SesionUsuario } from '../../../application/auth/emisor-token';
 
 @ApiTags('Espacios')
 @Controller('espacios')
@@ -56,7 +57,6 @@ export class EspaciosController {
 
   @Post()
   @Autenticado('ADMINISTRADOR')
-  @Auditar('CREAR_ESPACIO', 'Espacio')
   @UseInterceptors(NotificarOcupacionInterceptor)
   @ApiOperation({
     summary: 'Crear un espacio',
@@ -66,13 +66,15 @@ export class EspaciosController {
   @ApiCreatedResponse({ description: 'Espacio creado, disponible' })
   @ApiBadRequestResponse({ description: 'Zona, número o tipo inválidos' })
   @ApiConflictResponse({ description: 'El código ya existe en la sede' })
-  crear(@Body() dto: CrearEspacioDto): Promise<EspacioRegistrado> {
-    return this.crearEspacio.ejecutar(dto);
+  crear(
+    @Body() dto: CrearEspacioDto,
+    @UsuarioActual() sesion: SesionUsuario,
+  ): Promise<EspacioRegistrado> {
+    return this.crearEspacio.ejecutar(dto, sesion.sub);
   }
 
   @Patch(':id')
   @Autenticado('ADMINISTRADOR')
-  @Auditar('MODIFICAR_ESPACIO', 'Espacio')
   @UseInterceptors(NotificarOcupacionInterceptor)
   @ApiOperation({
     summary: 'Cambiar el estado o el tipo compatible de un espacio',
@@ -87,7 +89,8 @@ export class EspaciosController {
   actualizar(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ActualizarEspacioDto,
+    @UsuarioActual() sesion: SesionUsuario,
   ): Promise<EspacioRegistrado> {
-    return this.actualizarEspacio.ejecutar({ id, ...dto });
+    return this.actualizarEspacio.ejecutar({ id, ...dto }, sesion.sub);
   }
 }

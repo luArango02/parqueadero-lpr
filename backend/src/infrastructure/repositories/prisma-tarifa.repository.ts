@@ -11,6 +11,7 @@ import type {
   NuevaVersionTarifa,
   ResultadoVersionTarifa,
 } from '../../domain/tarifas/tarifa.repository';
+import { protegerDatosAuditoria } from '../../application/auditoria/proteger-datos-auditoria';
 
 type TarifaPrisma = Prisma.TarifaGetPayload<object>;
 
@@ -204,6 +205,56 @@ export class PrismaTarifaRepository implements TarifaRepository {
               vigenteDesde: ahora,
             },
           });
+
+          if (datos.usuarioId) {
+            const diurnaAnterior = vigentes.find(
+              (tarifa) => tarifa.franja === 'DIURNA',
+            );
+
+            const nocturnaAnterior = vigentes.find(
+              (tarifa) => tarifa.franja === 'NOCTURNA',
+            );
+
+            const datosAnteriores = protegerDatosAuditoria(
+              'Tarifa',
+              diurnaAnterior || nocturnaAnterior
+                ? {
+                    sedeId: datos.sedeId,
+                    tipoVehiculo: datos.tipoVehiculo,
+                    idDiurna: diurnaAnterior?.id ?? null,
+                    idNocturna: nocturnaAnterior?.id ?? null,
+                    valorDiurno: diurnaAnterior?.valor.toFixed(2) ?? null,
+                    valorNocturno: nocturnaAnterior?.valor.toFixed(2) ?? null,
+                    versionDiurna: diurnaAnterior?.version ?? null,
+                    versionNocturna: nocturnaAnterior?.version ?? null,
+                  }
+                : null,
+            );
+
+            const datosNuevos = protegerDatosAuditoria('Tarifa', {
+              sedeId: datos.sedeId,
+              tipoVehiculo: datos.tipoVehiculo,
+              idDiurna: diurna.id,
+              idNocturna: nocturna.id,
+              valorDiurno: diurna.valor.toFixed(2),
+              valorNocturno: nocturna.valor.toFixed(2),
+              versionDiurna: diurna.version,
+              versionNocturna: nocturna.version,
+            });
+
+            await tx.auditoria.create({
+              data: {
+                usuarioId: datos.usuarioId,
+                accion: datos.tarifaEsperadaId
+                  ? 'MODIFICAR_TARIFA'
+                  : 'CREAR_VERSION_TARIFA',
+                entidad: 'Tarifa',
+                entidadId: datos.tarifaEsperadaId ?? diurna.id,
+                datosAnteriores: datosAnteriores ?? Prisma.JsonNull,
+                datosNuevos: datosNuevos ?? Prisma.JsonNull,
+              },
+            });
+          }
 
           return {
             diurna: this.convertir(diurna),

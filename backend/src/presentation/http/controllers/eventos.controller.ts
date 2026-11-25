@@ -1,3 +1,8 @@
+import { Autenticado } from '../auth/autenticado.decorator';
+import { ListarHistorialEventosUseCase } from '../../../application/eventos/listar-historial-eventos.use-case';
+import type { ResultadoHistorial } from '../../../application/eventos/historial-eventos.repositorio';
+import { HistorialEventosQueryDto } from '../dto/historial-eventos.query.dto';
+import { ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -14,6 +19,7 @@ import { ListarEventosRecientesQueryDto } from '../dto/listar-eventos-recientes.
 export class EventosController {
   constructor(
     private readonly listarRecientes: ListarEventosRecientesUseCase,
+    private readonly listarHistorial: ListarHistorialEventosUseCase,
   ) {}
 
   @Get('recientes')
@@ -28,5 +34,30 @@ export class EventosController {
     @Query() query: ListarEventosRecientesQueryDto,
   ): Promise<EventoReciente[]> {
     return this.listarRecientes.ejecutar(query.limite);
+  }
+
+  @Get('historial')
+  @Autenticado('ADMINISTRADOR', 'OPERADOR')
+  @ApiOperation({
+    summary: 'Consultar historial de eventos',
+    description:
+      'Consulta paginada de accesos, pagos y alertas. Permite filtrar por placa, tipo, estado e intervalo de fechas. En pagos, estado corresponde al cobro relacionado.',
+  })
+  @ApiOkResponse({
+    description: 'Historial paginado y ordenado por fecha descendente.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Filtros, fechas o paginacion invalidos.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Autenticacion requerida.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Rol sin permisos para consultar el historial.',
+  })
+  historial(
+    @Query() query: HistorialEventosQueryDto,
+  ): Promise<ResultadoHistorial> {
+    return this.listarHistorial.ejecutar(query);
   }
 }

@@ -69,12 +69,17 @@ export interface EspacioRepositorio {
   idSedeActual(): Promise<string | null>;
   listar(sedeId: string, filtro: FiltroEspacios): Promise<EspacioConPlaca[]>;
   /** Devuelve null si el código ya existe en la sede. */
-  crear(sedeId: string, datos: DatosEspacio): Promise<EspacioRegistrado | null>;
+  crear(
+    sedeId: string,
+    datos: DatosEspacio,
+    usuarioId?: string,
+  ): Promise<EspacioRegistrado | null>;
   buscar(id: string): Promise<EspacioRegistrado | null>;
   /** Devuelve null si el espacio está ocupado: no se modifica con un vehículo dentro. */
   actualizar(
     id: string,
     cambios: CambiosEspacio,
+    usuarioId?: string,
   ): Promise<EspacioRegistrado | null>;
 }
 
