@@ -138,10 +138,28 @@ Restricciones importantes que garantiza la base de datos:
 
 ```bash
 cd backend
-npm test          # pruebas unitarias
-npm run test:e2e  # pruebas de punta a punta
-npm run lint      # revisión de estilo
+npm test                   # pruebas unitarias
+npm run test:e2e           # pruebas de punta a punta
+npm run test:integracion   # integración con PostgreSQL de pruebas (ver abajo)
+npm run lint               # revisión de estilo
 ```
+
+### Pruebas de integración
+
+Usan una base de datos **separada** de la de desarrollo: un PostgreSQL desechable en el puerto 5433
+(`docker-compose.test.yml`), con los datos en memoria. Las pruebas fuerzan esa base y se niegan a correr
+contra cualquier otra.
+
+```bash
+docker compose -f docker-compose.test.yml up -d db-test   # encender la base de pruebas
+cd backend
+npm run test:integracion                                  # aplica las migraciones y corre las pruebas
+docker compose -f docker-compose.test.yml down            # apagarla
+```
+
+Cubren los casos TC-11 a TC-14 del plan: ingreso bloqueado con el parqueadero lleno aunque el pase esté
+pagado, reingreso sin cobro nuevo al liberarse un espacio, dos vehículos compitiendo por el último
+espacio, y salida bloqueada que no libera el espacio.
 
 ## Variables de entorno
 
