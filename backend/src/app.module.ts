@@ -7,6 +7,7 @@ import { DeteccionesModule } from './detecciones.module';
 import { TarifasModule } from './application/tarifas/tarifas.module';
 
 import { DatabaseModule } from './infrastructure/database/database.module';
+import { AuditoriaModule } from './auditoria.module';
 import { TiempoRealModule } from './tiempo-real.module';
 import { UsuariosModule } from './usuarios.module';
 import { HealthController } from './presentation/http/controllers/health.controller';
@@ -24,6 +25,7 @@ import { EventosModule } from './eventos.module';
     DatabaseModule,
     UsuariosModule,
     TiempoRealModule,
+    AuditoriaModule,
     AccesosModule,
     VehiculosModule,
     DeteccionesModule,

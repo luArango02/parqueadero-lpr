@@ -135,4 +135,34 @@ describe('API (e2e)', () => {
         .expect(400);
     });
   });
+
+  describe('configuración solo para administrador', () => {
+    const tarifa = {
+      sedeId: '550e8400-e29b-41d4-a716-446655440000',
+      tipoVehiculo: 'CARRO',
+      valorDiurno: 9000,
+      valorNocturno: 6000,
+    };
+
+    it('POST /api/tarifas sin token responde 401', async () => {
+      await request(app.getHttpServer())
+        .post('/api/tarifas')
+        .send(tarifa)
+        .expect(401);
+    });
+
+    it('un operador no puede cambiar tarifas ni espacios: 403', async () => {
+      const token = await tokenDe('OPERADOR');
+      await request(app.getHttpServer())
+        .post('/api/tarifas')
+        .set('Authorization', `Bearer ${token}`)
+        .send(tarifa)
+        .expect(403);
+      await request(app.getHttpServer())
+        .patch('/api/espacios/550e8400-e29b-41d4-a716-446655440000')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ estado: 'FUERA_DE_SERVICIO' })
+        .expect(403);
+    });
+  });
 });
