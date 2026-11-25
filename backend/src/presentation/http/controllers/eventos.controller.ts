@@ -1,8 +1,3 @@
-import { Autenticado } from '../auth/autenticado.decorator';
-import { ListarHistorialEventosUseCase } from '../../../application/eventos/listar-historial-eventos.use-case';
-import type { ResultadoHistorial } from '../../../application/eventos/historial-eventos.repositorio';
-import { HistorialEventosQueryDto } from '../dto/historial-eventos.query.dto';
-import { ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -10,11 +5,16 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Autenticado } from '../auth/autenticado.decorator';
+import { ListarHistorialEventosUseCase } from '../../../application/eventos/listar-historial-eventos.use-case';
+import type { ResultadoHistorial } from '../../../application/eventos/historial-eventos.repositorio';
 import { ListarEventosRecientesUseCase } from '../../../application/eventos/listar-eventos-recientes.use-case';
 import { EventoReciente } from '../../../domain/eventos/evento-reciente';
+import { HistorialEventosQueryDto } from '../dto/historial-eventos.query.dto';
 import { ListarEventosRecientesQueryDto } from '../dto/listar-eventos-recientes.query.dto';
 import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
 import { EventoRecienteRespuestaDto } from '../docs/respuestas/evento-respuesta.dto';
+import { HistorialEventosRespuestaDto } from '../docs/respuestas/historial-eventos-respuesta.dto';
 
 @ApiTags('Eventos')
 @Controller('eventos')
@@ -51,19 +51,15 @@ export class EventosController {
   @ApiOperation({
     summary: 'Consultar historial de eventos',
     description:
-      'Consulta paginada de accesos, pagos y alertas. Permite filtrar por placa, tipo, estado e intervalo de fechas. En pagos, estado corresponde al cobro relacionado.',
+      'Consulta paginada de accesos, pagos y alertas. Permite filtrar por placa, tipo, estado e intervalo inclusivo de fechas. En pagos, estado corresponde al cobro relacionado. Disponible para administradores y operadores.',
   })
   @ApiOkResponse({
-    description: 'Historial paginado y ordenado por fecha descendente.',
+    description: 'Historial paginado y ordenado por fecha descendente',
+    type: HistorialEventosRespuestaDto,
   })
   @ApiBadRequestResponse({
-    description: 'Filtros, fechas o paginacion invalidos.',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Autenticacion requerida.',
-  })
-  @ApiForbiddenResponse({
-    description: 'Rol sin permisos para consultar el historial.',
+    description: 'Filtros, fechas o paginación inválidos',
+    type: ErrorHttpDto,
   })
   historial(
     @Query() query: HistorialEventosQueryDto,
