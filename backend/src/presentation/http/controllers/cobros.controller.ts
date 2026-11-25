@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { CalcularCobroService } from '../../../application/cobros/calcular-cobro.service';
 import { CalcularCobroDto } from '../dto/cobros/calcular-cobro.dto';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
 
 @ApiTags('Cobros')
 @Controller('cobros')
@@ -37,9 +38,11 @@ export class CobrosController {
   })
   @ApiBadRequestResponse({
     description: 'Datos de entrada inválidos.',
+    type: ErrorHttpDto,
   })
   @ApiNotFoundResponse({
     description: 'Sede, vehículo o tarifa no encontrados.',
+    type: ErrorHttpDto,
   })
   async calcular(@Body() dto: CalcularCobroDto) {
     return this.calcularCobro.ejecutar({

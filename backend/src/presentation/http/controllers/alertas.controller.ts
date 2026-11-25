@@ -13,6 +13,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import type { SesionUsuario } from '../../../application/auth/emisor-token';
@@ -23,6 +24,8 @@ import { Autenticado } from '../auth/autenticado.decorator';
 import { UsuarioActual } from '../auth/usuario-actual.decorator';
 import { CambiarEstadoAlertaDto } from '../dto/cambiar-estado-alerta.dto';
 import { ListarAlertasQueryDto } from '../dto/listar-alertas.query.dto';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
+import { AlertaRespuestaDto } from '../docs/respuestas/alerta-respuesta.dto';
 
 @ApiTags('Alertas')
 @Controller('alertas')
@@ -39,8 +42,15 @@ export class AlertasController {
     description:
       'Más recientes primero, con filtros por estado, tipo y placa. Cada alerta trae su evidencia (la detección que la originó) y, si ya se resolvió, quién la resolvió, cuándo y el motivo.',
   })
-  @ApiOkResponse({ description: 'Alertas con su evidencia' })
-  @ApiBadRequestResponse({ description: 'Filtro inválido' })
+  @ApiOkResponse({
+    description: 'Alertas con su evidencia',
+    type: AlertaRespuestaDto,
+    isArray: true,
+  })
+  @ApiBadRequestResponse({
+    description: 'Filtro inválido. El límite debe estar entre 1 y 100',
+    type: ErrorHttpDto,
+  })
   listar(@Query() query: ListarAlertasQueryDto): Promise<AlertaRegistrada[]> {
     return this.listarAlertas.ejecutar(query);
   }
@@ -50,14 +60,33 @@ export class AlertasController {
   @ApiOperation({
     summary: 'Resolver una alerta (solo operador)',
     description:
-      'El operador revisa la alerta y la pasa a RESUELTA, con el motivo. En una discrepancia de tipo debe confirmar el tipo real del vehículo (CARRO o MOTO), que queda como tipo registrado; mientras la alerta siga abierta, el ingreso de esa placa se bloquea.',
+      'El operador revisa la alerta y la pasa a RESUELTA, con el motivo. En una discrepancia de tipo debe confirmar el tipo real del vehículo (CARRO o MOTO), que queda como tipo registrado; mientras la alerta siga abierta, el ingreso de esa placa se bloquea. El tipo confirmado no se admite para otros tipos de alerta.',
   })
-  @ApiOkResponse({ description: 'Alerta resuelta' })
+  @ApiParam({
+    name: 'id',
+    description: 'Identificador de la alerta',
+    schema: {
+      type: 'string',
+      format: 'uuid',
+    },
+    example: '550e8400-e29b-41d4-a716-446655440006',
+  })
+  @ApiOkResponse({
+    description: 'Alerta resuelta',
+    type: AlertaRespuestaDto,
+  })
   @ApiBadRequestResponse({
     description: 'Id, motivo o tipo confirmado inválidos',
+    type: ErrorHttpDto,
   })
-  @ApiNotFoundResponse({ description: 'Alerta no encontrada' })
-  @ApiConflictResponse({ description: 'La alerta ya estaba resuelta' })
+  @ApiNotFoundResponse({
+    description: 'Alerta no encontrada',
+    type: ErrorHttpDto,
+  })
+  @ApiConflictResponse({
+    description: 'La alerta ya estaba resuelta',
+    type: ErrorHttpDto,
+  })
   cambiarEstado(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CambiarEstadoAlertaDto,
