@@ -32,11 +32,6 @@ import { ListarEspaciosQueryDto } from '../dto/listar-espacios.query.dto';
 import { NotificarOcupacionInterceptor } from '../../../infrastructure/tiempo-real/notificar-ocupacion.interceptor';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { Autenticado } from '../auth/autenticado.decorator';
-import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
-import {
-  EspacioRespuestaDto,
-  EspacioConPlacaRespuestaDto,
-} from '../docs/respuestas/espacio-respuesta.dto';
 
 @ApiTags('Espacios')
 @Controller('espacios')
@@ -53,19 +48,8 @@ export class EspaciosController {
     description:
       'Con filtros opcionales por zona, tipo compatible y estado. Cada espacio trae `placa`: la del vehículo que lo ocupa, o null si no hay nadie adentro.',
   })
-  @ApiOkResponse({
-    description: 'Espacios ordenados por zona y código, con su placa asociada',
-    type: EspacioConPlacaRespuestaDto,
-    isArray: true,
-  })
-  @ApiBadRequestResponse({
-    description: 'Filtro inválido',
-    type: ErrorHttpDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'No hay sede configurada',
-    type: ErrorHttpDto,
-  })
+  @ApiOkResponse({ description: 'Espacios ordenados por zona y código' })
+  @ApiBadRequestResponse({ description: 'Filtro inválido' })
   listar(@Query() query: ListarEspaciosQueryDto): Promise<EspacioConPlaca[]> {
     return this.listarEspacios.ejecutar(query);
   }
@@ -79,22 +63,9 @@ export class EspaciosController {
     description:
       'El código se arma con la zona y el número (zona A, número 1 = A-01) y no puede repetirse en la sede.',
   })
-  @ApiCreatedResponse({
-    description: 'Espacio creado correctamente en estado DISPONIBLE',
-    type: EspacioRespuestaDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Zona, número o tipo compatible inválidos',
-    type: ErrorHttpDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'No hay sede configurada',
-    type: ErrorHttpDto,
-  })
-  @ApiConflictResponse({
-    description: 'El código del espacio ya existe en la sede',
-    type: ErrorHttpDto,
-  })
+  @ApiCreatedResponse({ description: 'Espacio creado, disponible' })
+  @ApiBadRequestResponse({ description: 'Zona, número o tipo inválidos' })
+  @ApiConflictResponse({ description: 'El código ya existe en la sede' })
   crear(@Body() dto: CrearEspacioDto): Promise<EspacioRegistrado> {
     return this.crearEspacio.ejecutar(dto);
   }
@@ -108,29 +79,11 @@ export class EspaciosController {
     description:
       'El estado solo puede ser DISPONIBLE o FUERA_DE_SERVICIO (OCUPADO lo decide el sistema). El código no se modifica. Un espacio ocupado no se puede modificar.',
   })
-  @ApiParam({
-    name: 'id',
-    description: 'Identificador UUID del espacio',
-    type: String,
-    format: 'uuid',
-  })
-  @ApiOkResponse({
-    description: 'Espacio actualizado correctamente',
-    type: EspacioRespuestaDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Identificador inválido o sin cambios válidos',
-    type: ErrorHttpDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Espacio no encontrado',
-    type: ErrorHttpDto,
-  })
-  @ApiConflictResponse({
-    description:
-      'El espacio está ocupado o fue ocupado durante la modificación',
-    type: ErrorHttpDto,
-  })
+  @ApiParam({ name: 'id', description: 'Id del espacio' })
+  @ApiOkResponse({ description: 'Espacio actualizado' })
+  @ApiBadRequestResponse({ description: 'Id inválido o sin cambios válidos' })
+  @ApiNotFoundResponse({ description: 'Espacio no encontrado' })
+  @ApiConflictResponse({ description: 'El espacio está ocupado' })
   actualizar(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ActualizarEspacioDto,

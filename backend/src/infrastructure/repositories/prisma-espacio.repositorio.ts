@@ -11,6 +11,7 @@ import {
 } from '../../application/espacios/espacio.repositorio';
 import { EstadoEspacio } from '../../domain/espacios/espacio';
 import { PrismaService } from '../database/prisma.service';
+import { protegerDatosAuditoria } from '../../application/auditoria/proteger-datos-auditoria';
 
 const CAMPOS_ESPACIO = {
   id: true,
@@ -104,20 +105,40 @@ export class PrismaEspacioRepositorio implements EspacioRepositorio {
   async crear(
     sedeId: string,
     datos: DatosEspacio,
+    usuarioId?: string,
   ): Promise<EspacioRegistrado | null> {
     try {
-      return await this.prisma.espacio.create({
-        data: { ...datos, sedeId },
-        select: CAMPOS_ESPACIO,
+      return await this.prisma.$transaction(async (tx) => {
+        const espacio = await tx.espacio.create({
+          data: { ...datos, sedeId },
+          select: CAMPOS_ESPACIO,
+        });
+
+        if (usuarioId) {
+          const datosNuevos = protegerDatosAuditoria('Espacio', espacio);
+
+          await tx.auditoria.create({
+            data: {
+              usuarioId,
+              accion: 'CREAR_ESPACIO',
+              entidad: 'Espacio',
+              entidadId: espacio.id,
+              datosAnteriores: Prisma.JsonNull,
+              datosNuevos: datosNuevos ?? Prisma.JsonNull,
+            },
+          });
+        }
+
+        return espacio;
       });
     } catch (error) {
-      // P2002: el código ya existe en la sede (restricción única), también si dos peticiones llegan a la vez.
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
         return null;
       }
+
       throw error;
     }
   }
@@ -132,19 +153,67 @@ export class PrismaEspacioRepositorio implements EspacioRepositorio {
   actualizar(
     id: string,
     cambios: CambiosEspacio,
+    usuarioId?: string,
   ): Promise<EspacioRegistrado | null> {
     return this.prisma.$transaction(
       async (tx): Promise<EspacioRegistrado | null> => {
-        // Solo actualiza si no está ocupado: evita pisar a un ingreso que lo tome al mismo tiempo.
-        const { count } = await tx.espacio.updateMany({
-          where: { id, estado: { not: 'OCUPADO' } },
-          data: cambios,
-        });
-        if (count === 0) return null;
-        return tx.espacio.findUniqueOrThrow({
+        // Bloquea el registro durante la modificación.
+        const registros = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM espacios
+        WHERE id = ${id}
+        FOR UPDATE
+      `;
+
+        if (registros.length === 0) {
+          return null;
+        }
+
+        const anterior = await tx.espacio.findUnique({
           where: { id },
           select: CAMPOS_ESPACIO,
         });
+
+        if (!anterior || anterior.estado === 'OCUPADO') {
+          return null;
+        }
+
+        // Conserva la protección contra ingresos concurrentes.
+        const { count } = await tx.espacio.updateMany({
+          where: {
+            id,
+            estado: { not: 'OCUPADO' },
+          },
+          data: cambios,
+        });
+
+        if (count === 0) {
+          return null;
+        }
+
+        const actualizado = await tx.espacio.findUniqueOrThrow({
+          where: { id },
+          select: CAMPOS_ESPACIO,
+        });
+
+        if (usuarioId) {
+          const datosAnteriores = protegerDatosAuditoria('Espacio', anterior);
+
+          const datosNuevos = protegerDatosAuditoria('Espacio', actualizado);
+
+          await tx.auditoria.create({
+            data: {
+              usuarioId,
+              accion: 'MODIFICAR_ESPACIO',
+              entidad: 'Espacio',
+              entidadId: actualizado.id,
+              datosAnteriores: datosAnteriores ?? Prisma.JsonNull,
+              datosNuevos: datosNuevos ?? Prisma.JsonNull,
+            },
+          });
+        }
+
+        return actualizado;
       },
     );
   }

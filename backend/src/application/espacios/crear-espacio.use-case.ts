@@ -30,7 +30,10 @@ export class CrearEspacioUseCase {
     private readonly repositorio: EspacioRepositorio,
   ) {}
 
-  async ejecutar(solicitud: SolicitudEspacio): Promise<EspacioRegistrado> {
+  async ejecutar(
+    solicitud: SolicitudEspacio,
+    usuarioId?: string,
+  ): Promise<EspacioRegistrado> {
     const zona = normalizarZona(solicitud.zona);
     if (!esZonaValida(zona)) {
       throw new BadRequestException(
@@ -45,11 +48,15 @@ export class CrearEspacioUseCase {
 
     const codigo = codigoDeEspacio(zona, solicitud.numero);
     // La unicidad la garantiza la base de datos: crear devuelve null si el código ya existe.
-    const espacio = await this.repositorio.crear(sedeId, {
+    const datos = {
       codigo,
       zona,
       tipoCompatible: solicitud.tipoCompatible,
-    });
+    };
+
+    const espacio = usuarioId
+      ? await this.repositorio.crear(sedeId, datos, usuarioId)
+      : await this.repositorio.crear(sedeId, datos);
     if (!espacio) {
       throw new ConflictException(`El código ${codigo} ya existe en la sede`);
     }

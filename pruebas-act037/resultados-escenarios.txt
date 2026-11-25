@@ -1,0 +1,108 @@
+============================================================
+ACT-037 - PRUEBAS DE REGLAS DE NEGOCIO
+EVIDENCIA DE EJECUCION DE ESCENARIOS
+============================================================
+
+Fecha: 25/11/2026
+Rama: feature/ACT-037-pruebas-reglas-negocio
+Base de datos: parqueadero_act037_test
+Motor: PostgreSQL
+Puerto: 5433
+Zona horaria: America/Bogota
+Framework de pruebas: Jest
+
+Comando ejecutado:
+
+npx jest --config ./test/jest-escenarios.json --runInBand --verbose
+
+============================================================
+RESULTADOS
+============================================================
+
+PASS test/escenarios-contexto.spec.ts
+
+ACT-037 - Escenarios del contexto
+
+[PASS] RN-07: una nueva version de tarifas no modifica los cobros anteriores (115 ms)
+
+[PASS] RN-02: rechaza tarifa diurna 8000 y nocturna 9000 (22 ms)
+
+[PASS] RN-02: rechaza tarifa diurna 8000 y nocturna 8000 (19 ms)
+
+[PASS] RN-04: ingresos simultaneos de una misma placa no duplican cobros ni permanencias (56 ms)
+
+[PASS] RN-01: motocicleta permanece varios dias operativos sin generar cobros (75 ms)
+
+[PASS] ESC-01: moto ingresa y sale sin generar cobros (46 ms)
+
+[PASS] ESC-02: carro diurno debe pagar antes de salir (62 ms)
+
+[PASS] ESC-09: lectura de baja confianza requiere validacion manual y auditoria (47 ms)
+
+[PASS] TC-10: ingreso a las 05:20 y permanencia hasta las 06:10 generan dos cobros sin duplicados (86 ms)
+
+[PASS] TC-11: pase vigente no permite ingresar cuando no hay cupo (104 ms)
+
+[PASS] TC-12: pase vigente permite reingresar cuando se libera un cupo (117 ms)
+
+[PASS] TC-13: dos carros compiten por el ultimo espacio y solo uno ingresa (231 ms)
+
+[PASS] TC-14: salida denegada conserva la permanencia y el espacio ocupado (137 ms)
+
+[PASS] TC-15: discrepancia de clasificacion genera alerta y no asigna espacio (99 ms)
+
+[PASS] Limite horario 2026-11-24T05:59:59-05:00: dia 2026-11-23, franja NOCTURNA y valor 5000 (77 ms)
+
+[PASS] Limite horario 2026-11-24T06:00:00-05:00: dia 2026-11-24, franja DIURNA y valor 8000 (81 ms)
+
+[PASS] Limite horario 2026-11-24T17:59:59-05:00: dia 2026-11-24, franja DIURNA y valor 8000 (85 ms)
+
+[PASS] Limite horario 2026-11-24T18:00:00-05:00: dia 2026-11-24, franja NOCTURNA y valor 5000 (81 ms)
+
+[PASS] ESC-03: reingreso diurno conserva el cobro pagado (149 ms)
+
+[PASS] ESC-04: reingreso nocturno conserva el pago diurno (346 ms)
+
+[PASS] ESC-05: primer ingreso a las 19:00 aplica tarifa nocturna (117 ms)
+
+[PASS] ESC-06: ingreso a las 23:00 y salida a la 01:00 mantienen un solo cobro (155 ms)
+
+[PASS] ESC-07: permanencia a las 06:00 genera un nuevo cobro diurno sin duplicados (304 ms)
+
+[PASS] ESC-08: pago del lunes no habilita el pase del martes (252 ms)
+
+[PASS] TC-09: ingreso a las 05:20 y salida a las 05:50 conservan tarifa nocturna (164 ms)
+
+[PASS] prepara los datos independientes de cada escenario (48 ms)
+
+============================================================
+RESUMEN DE JEST
+============================================================
+
+Test Suites: 1 passed, 1 total
+Tests:       26 passed, 26 total
+Snapshots:   0 total
+Time:        5.209 s, estimated 8 s
+Ran all test suites.
+
+============================================================
+CONCLUSION
+============================================================
+
+Pruebas ejecutadas: 26
+Pruebas aprobadas: 26
+Pruebas fallidas: 0
+Porcentaje de exito: 100%
+
+Se verificaron los nueve escenarios originales, los casos
+TC-09 a TC-15, los limites horarios, el versionamiento de
+tarifas, la unicidad de cobros y la concurrencia de accesos.
+
+ESC-09 verifica la validacion manual de la deteccion y su
+auditoria, pero no demuestra su vinculacion con un evento
+de acceso.
+
+Las pruebas se ejecutaron sobre una base de datos exclusiva
+de pruebas, utilizando repositorios reales de PostgreSQL.
+
+Resultado: APROBADO.

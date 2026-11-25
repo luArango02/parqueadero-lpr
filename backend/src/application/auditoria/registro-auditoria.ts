@@ -3,6 +3,7 @@ export interface CambioAuditado {
   accion: string;
   entidad: string;
   entidadId: string | null;
+  datosAnteriores?: unknown;
   datosNuevos: unknown;
 }
 

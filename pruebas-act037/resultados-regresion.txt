@@ -1,0 +1,190 @@
+============================================================
+ACT-037 - PRUEBAS DE REGLAS DE NEGOCIO
+EVIDENCIA DE REGRESION GENERAL DEL BACKEND
+============================================================
+
+Fecha: 25/11/2026
+Rama: feature/ACT-037-pruebas-reglas-negocio
+Framework de pruebas: Jest
+
+Objetivo:
+
+Verificar que la implementacion del reloj controlado y las
+modificaciones realizadas en ACT-037 no introduzcan
+regresiones en las funcionalidades existentes del backend.
+
+============================================================
+1. REGRESION GENERAL
+============================================================
+
+Base de datos: parqueadero_lpr_test
+Puerto: 5433
+
+Comando ejecutado:
+
+npx jest --runInBand --testPathIgnorePatterns="prisma-salida.repositorio.spec.ts"
+
+RESULTADOS:
+
+PASS src/infrastructure/tiempo-real/socket-io-notificador-accesos.spec.ts
+PASS src/infrastructure/repositories/prisma-pago.repository.integration.spec.ts
+PASS src/presentation/http/controllers/health.controller.spec.ts
+PASS src/application/accesos/verificar-cambio-dia.service.spec.ts
+PASS src/presentation/http/auditoria/auditoria.interceptor.spec.ts
+PASS src/application/accesos/registrar-salida.use-case.spec.ts
+PASS src/application/alertas/alertas.use-cases.spec.ts
+PASS src/infrastructure/repositories/prisma-tarifa.repository.spec.ts
+PASS src/application/espacios/espacios.use-cases.spec.ts
+PASS src/application/detecciones/registrar-deteccion.use-case.spec.ts
+PASS src/application/tarifas/tarifas.service.spec.ts
+PASS src/application/usuarios/gestion-usuarios.service.spec.ts
+PASS src/application/pases/consultar-pase-vigente.use-case.spec.ts
+PASS src/application/accesos/registrar-ingreso.use-case.spec.ts
+PASS src/application/auth/iniciar-sesion.use-case.spec.ts
+PASS src/application/espacios/cupos.use-cases.spec.ts
+PASS src/application/cobros/calcular-cobro.service.spec.ts
+PASS src/application/vehiculos/vehiculos.use-cases.spec.ts
+PASS src/infrastructure/repositories/prisma-pago.repository.spec.ts
+PASS src/application/detecciones/validar-deteccion.use-case.spec.ts
+PASS src/infrastructure/lectores/simulador-lector-placas.spec.ts
+PASS src/application/pagos/registrar-pago-efectivo.use-case.spec.ts
+PASS src/application/eventos/listar-eventos-recientes.use-case.spec.ts
+PASS src/domain/espacios/cupos.spec.ts
+PASS src/domain/tarifas/tarifa.rules.spec.ts
+PASS src/domain/alertas/alerta.spec.ts
+PASS src/domain/eventos/evento-reciente.spec.ts
+PASS src/domain/tiempo/reglas-horario.spec.ts
+PASS src/domain/detecciones/validacion.spec.ts
+PASS src/domain/vehiculos/placa.spec.ts
+PASS src/domain/detecciones/deteccion.spec.ts
+PASS src/domain/cobros/estrategias/cobro-strategies.spec.ts
+PASS src/domain/vehiculos/estado-vehiculo.spec.ts
+PASS src/domain/tiempo/dias-operativos-transcurridos.spec.ts
+PASS src/domain/espacios/espacio.spec.ts
+
+RESUMEN DE JEST:
+
+Test Suites: 35 passed, 35 total
+Tests:       276 passed, 276 total
+Snapshots:   0 total
+Time:        10.076 s, estimated 14 s
+Ran all test suites.
+
+============================================================
+2. INTEGRACION ACT-020
+============================================================
+
+Base de datos: parqueadero_test
+Puerto: 5433
+
+Comando ejecutado:
+
+npx jest prisma-salida.repositorio.spec.ts --runInBand --verbose
+
+RESULTADOS:
+
+PASS src/infrastructure/repositories/prisma-salida.repositorio.spec.ts
+
+PrismaSalidaRepositorio - integracion ACT-020
+
+[PASS] genera un cobro diurno al cruzar las 06:00 (19 ms)
+
+[PASS] no duplica el cobro al repetir la verificacion (5 ms)
+
+[PASS] registra una auditoria para el cobro generado (4 ms)
+
+[PASS] no genera cobros para una motocicleta (2 ms)
+
+[PASS] no genera un cobro si todavia no son las 06:00 (2 ms)
+
+[PASS] evita cobros duplicados ante verificaciones concurrentes (67 ms)
+
+RESUMEN DE JEST:
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        1.025 s
+Ran all test suites matching prisma-salida.repositorio.spec.ts.
+
+============================================================
+3. VERIFICACION UNITARIA DEL CAMBIO DE DIA
+============================================================
+
+Comando ejecutado:
+
+npx jest verificar-cambio-dia.service.spec.ts --runInBand --verbose
+
+RESULTADOS:
+
+PASS src/application/accesos/verificar-cambio-dia.service.spec.ts
+
+VerificarCambioDiaService - ACT-020
+
+[PASS] consulta solamente las permanencias activas (2 ms)
+
+[PASS] verifica los cobros de cada permanencia activa (2 ms)
+
+[PASS] no verifica vehiculos sin permanencia activa (1 ms)
+
+[PASS] continua con otros vehiculos si uno falla (17 ms)
+
+[PASS] evita ejecuciones simultaneas dentro de la instancia (1 ms)
+
+RESUMEN DE JEST:
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        1.222 s
+
+NOTA:
+
+Estas cinco pruebas tambien forman parte de las 276 pruebas
+de regresion general. No se contabilizan nuevamente en el
+resultado consolidado.
+
+============================================================
+4. MENSAJES ESPERADOS DURANTE LAS PRUEBAS
+============================================================
+
+Durante la ejecucion se registraron los siguientes mensajes:
+
+WARN [SocketIoNotificadorAccesos]
+No se pudo emitir la ocupacion: Error: sin base de datos
+
+ERROR [VerificarCambioDiaService]
+Error verificando cobros de la permanencia permanencia-1
+Error: Error de prueba
+
+WARN [AuditoriaInterceptor]
+No se pudo auditar: Error: sin base de datos
+
+Estos mensajes corresponden a pruebas de manejo de errores
+y tolerancia a fallos. Las suites correspondientes
+finalizaron correctamente.
+
+============================================================
+5. VALIDACIONES ADICIONALES
+============================================================
+
+Prettier: APROBADO
+ESLint: APROBADO
+npm run build: APROBADO
+git diff --check: APROBADO
+
+============================================================
+6. RESULTADO CONSOLIDADO DE REGRESION
+============================================================
+
+Suites diferentes ejecutadas: 36
+Suites aprobadas: 36
+Pruebas diferentes ejecutadas: 282
+Pruebas aprobadas: 282
+Pruebas fallidas: 0
+Porcentaje de exito: 100%
+
+No se detectaron regresiones en las pruebas ejecutadas
+sobre las funcionalidades existentes del backend.
+
+Resultado: APROBADO.

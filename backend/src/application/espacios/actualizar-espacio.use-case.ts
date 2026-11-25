@@ -28,6 +28,7 @@ export class ActualizarEspacioUseCase {
 
   async ejecutar(
     solicitud: SolicitudCambioEspacio,
+    usuarioId?: string,
   ): Promise<EspacioRegistrado> {
     if (
       solicitud.estado === undefined &&
@@ -48,10 +49,14 @@ export class ActualizarEspacioUseCase {
       );
     }
 
-    const actualizado = await this.repositorio.actualizar(solicitud.id, {
+    const cambios = {
       estado: solicitud.estado,
       tipoCompatible: solicitud.tipoCompatible,
-    });
+    };
+
+    const actualizado = usuarioId
+      ? await this.repositorio.actualizar(solicitud.id, cambios, usuarioId)
+      : await this.repositorio.actualizar(solicitud.id, cambios);
     // Un ingreso pudo ocupar el espacio entre la consulta y la escritura.
     if (!actualizado) {
       throw new ConflictException(
