@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import {
   CambiosEspacio,
   DatosEspacio,
+  EspacioConPlaca,
   EspacioRegistrado,
   EspacioRepositorio,
   FiltroEspacios,
@@ -72,17 +73,32 @@ export class PrismaEspacioRepositorio implements EspacioRepositorio {
     };
   }
 
-  listar(sedeId: string, filtro: FiltroEspacios): Promise<EspacioRegistrado[]> {
-    return this.prisma.espacio.findMany({
+  async listar(
+    sedeId: string,
+    filtro: FiltroEspacios,
+  ): Promise<EspacioConPlaca[]> {
+    const espacios = await this.prisma.espacio.findMany({
       where: {
         sedeId,
         ...(filtro.zona ? { zona: filtro.zona } : {}),
         ...(filtro.tipo ? { tipoCompatible: filtro.tipo } : {}),
         ...(filtro.estado ? { estado: filtro.estado } : {}),
       },
-      select: CAMPOS_ESPACIO,
+      select: {
+        ...CAMPOS_ESPACIO,
+        // La permanencia sin salida es el vehículo que está adentro (a lo sumo una por espacio).
+        permanencias: {
+          where: { salidaEn: null },
+          select: { vehiculo: { select: { placa: true } } },
+          take: 1,
+        },
+      },
       orderBy: [{ zona: 'asc' }, { codigo: 'asc' }],
     });
+    return espacios.map(({ permanencias, ...espacio }) => ({
+      ...espacio,
+      placa: permanencias[0]?.vehiculo.placa ?? null,
+    }));
   }
 
   async crear(

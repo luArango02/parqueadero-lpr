@@ -20,7 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { ActualizarEspacioUseCase } from '../../../application/espacios/actualizar-espacio.use-case';
 import { CrearEspacioUseCase } from '../../../application/espacios/crear-espacio.use-case';
-import { EspacioRegistrado } from '../../../application/espacios/espacio.repositorio';
+import {
+  EspacioConPlaca,
+  EspacioRegistrado,
+} from '../../../application/espacios/espacio.repositorio';
 import { ListarEspaciosUseCase } from '../../../application/espacios/listar-espacios.use-case';
 import { ActualizarEspacioDto } from '../dto/actualizar-espacio.dto';
 import { CrearEspacioDto } from '../dto/crear-espacio.dto';
@@ -38,11 +41,12 @@ export class EspaciosController {
   @Get()
   @ApiOperation({
     summary: 'Listar los espacios de la sede',
-    description: 'Con filtros opcionales por zona, tipo compatible y estado.',
+    description:
+      'Con filtros opcionales por zona, tipo compatible y estado. Cada espacio trae `placa`: la del vehículo que lo ocupa, o null si no hay nadie adentro.',
   })
   @ApiOkResponse({ description: 'Espacios ordenados por zona y código' })
   @ApiBadRequestResponse({ description: 'Filtro inválido' })
-  listar(@Query() query: ListarEspaciosQueryDto): Promise<EspacioRegistrado[]> {
+  listar(@Query() query: ListarEspaciosQueryDto): Promise<EspacioConPlaca[]> {
     return this.listarEspacios.ejecutar(query);
   }
 

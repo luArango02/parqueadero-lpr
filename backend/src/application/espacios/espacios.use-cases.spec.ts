@@ -9,6 +9,7 @@ import { CrearEspacioUseCase } from './crear-espacio.use-case';
 import {
   CambiosEspacio,
   DatosEspacio,
+  EspacioConPlaca,
   EspacioRegistrado,
   EspacioRepositorio,
   FiltroEspacios,
@@ -50,6 +51,7 @@ class RepositorioEnMemoria implements EspacioRepositorio {
   espacios = new Map<string, EspacioRegistrado>();
   ultimoFiltro: FiltroEspacios | null = null;
   seOcupaDuranteLaEscritura = false;
+  placas = new Map<string, string>();
 
   sedeActual(): Promise<SedeActual | null> {
     return Promise.resolve(this.sede);
@@ -59,12 +61,14 @@ class RepositorioEnMemoria implements EspacioRepositorio {
     return Promise.resolve(this.sede?.id ?? null);
   }
 
-  listar(
-    _sedeId: string,
-    filtro: FiltroEspacios,
-  ): Promise<EspacioRegistrado[]> {
+  listar(_sedeId: string, filtro: FiltroEspacios): Promise<EspacioConPlaca[]> {
     this.ultimoFiltro = filtro;
-    return Promise.resolve([...this.espacios.values()]);
+    return Promise.resolve(
+      [...this.espacios.values()].map((e) => ({
+        ...e,
+        placa: this.placas.get(e.id) ?? null,
+      })),
+    );
   }
 
   crear(
@@ -142,6 +146,20 @@ describe('ListarEspaciosUseCase', () => {
       tipo: 'MOTO',
       estado: 'DISPONIBLE',
     });
+  });
+
+  it('devuelve la placa del vehículo en los espacios ocupados y null en el resto', async () => {
+    const repositorio = new RepositorioEnMemoria();
+    repositorio.espacios.set('e1', espacio('e1', 'A-01', 'OCUPADO'));
+    repositorio.espacios.set('e2', espacio('e2', 'A-02'));
+    repositorio.placas.set('e1', 'ABC123');
+
+    const lista = await new ListarEspaciosUseCase(repositorio).ejecutar({});
+
+    expect(lista.map((e) => [e.codigo, e.placa])).toEqual([
+      ['A-01', 'ABC123'],
+      ['A-02', null],
+    ]);
   });
 
   it('lanza 404 cuando no hay sede configurada', async () => {

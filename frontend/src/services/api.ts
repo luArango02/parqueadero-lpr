@@ -1,3 +1,5 @@
+import type { Espacio } from '../mapa/espacios'
+
 export interface Cobro {
   id: string
   valor: number
@@ -48,4 +50,18 @@ export interface ResultadoSalida {
 
 export function registrarSalida(placa: string, confianza: number): Promise<ResultadoSalida> {
   return post<ResultadoSalida>('/accesos/salida', { placa, confianza })
+}
+
+async function get<T>(ruta: string): Promise<T> {
+  const respuesta = await fetch(`/api${ruta}`)
+  const datos = await respuesta.json()
+  if (!respuesta.ok) {
+    const mensaje = Array.isArray(datos.message) ? datos.message.join(', ') : datos.message
+    throw new Error(mensaje ?? 'Error de comunicación con el servidor')
+  }
+  return datos as T
+}
+
+export function obtenerEspacios(): Promise<Espacio[]> {
+  return get<Espacio[]>('/espacios')
 }
