@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import FormularioLectura from '../components/FormularioLectura.vue'
 import IndicadorBarrera from '../components/IndicadorBarrera.vue'
 import { registrarIngreso, type ResultadoIngreso } from '../services/api'
+import { CARRIL_SIN_LECTURAS, aplicarBarrera, type EstadoCarril } from '../tiempoReal/barrera'
+import { useTiempoReal } from '../tiempoReal/useTiempoReal'
 
 const enviando = ref(false)
 const error = ref('')
 const resultado = ref<ResultadoIngreso | null>(null)
 const historial = ref<(ResultadoIngreso & { hora: string })[]>([])
+const barrera = ref<EstadoCarril>(CARRIL_SIN_LECTURAS)
+const detalleBarrera = computed(() =>
+  barrera.value.placa ? `${barrera.value.placa} · ${barrera.value.motivo}` : '',
+)
+
+const { alEvento } = useTiempoReal()
+alEvento('barrera:actualizada', (evento) => {
+  barrera.value = aplicarBarrera(barrera.value, evento, 'ENTRADA')
+})
 
 async function registrar(placa: string, confianza: number) {
   enviando.value = true
@@ -15,6 +26,12 @@ async function registrar(placa: string, confianza: number) {
   try {
     const respuesta = await registrarIngreso(placa, confianza)
     resultado.value = respuesta
+    barrera.value = {
+      estado: respuesta.barrera,
+      placa: respuesta.placa,
+      motivo: respuesta.motivo,
+      ocurridoEn: new Date().toISOString(),
+    }
     historial.value.unshift({ ...respuesta, hora: new Date().toLocaleTimeString('es-CO') })
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'No se pudo registrar el ingreso'
@@ -27,7 +44,7 @@ async function registrar(placa: string, confianza: number) {
 <template>
   <h1>Carril de entrada</h1>
 
-  <IndicadorBarrera :estado="resultado?.barrera ?? null" />
+    <IndicadorBarrera :estado="barrera.estado" :detalle="detalleBarrera" />
 
   <FormularioLectura texto-boton="Registrar ingreso" :enviando="enviando" @leer="registrar" />
   <p v-if="error" class="error">{{ error }}</p>
