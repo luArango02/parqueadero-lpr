@@ -26,8 +26,9 @@ import { TarifasService } from '../../../application/tarifas/tarifas.service';
 
 import { CrearVersionTarifaDto } from '../dto/tarifas/crear-version-tarifa.dto';
 import { ModificarTarifaDto } from '../dto/tarifas/modificar-tarifa.dto';
-import { Auditar } from '../auditoria/auditar.decorator';
 import { Autenticado } from '../auth/autenticado.decorator';
+import { UsuarioActual } from '../auth/usuario-actual.decorator';
+import type { SesionUsuario } from '../../../application/auth/emisor-token';
 
 @ApiTags('Tarifas')
 @Controller('tarifas')
@@ -107,7 +108,6 @@ export class TarifasController {
 
   @Post(['', 'versiones'])
   @Autenticado('ADMINISTRADOR')
-  @Auditar('CREAR_VERSION_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Crear una nueva version de tarifas',
     description:
@@ -126,13 +126,15 @@ export class TarifasController {
   @ApiConflictResponse({
     description: 'Conflicto durante el versionamiento.',
   })
-  crearVersion(@Body() body: CrearVersionTarifaDto) {
-    return this.tarifasService.actualizarTarifas(body);
+  crearVersion(
+    @Body() body: CrearVersionTarifaDto,
+    @UsuarioActual() sesion: SesionUsuario,
+  ) {
+    return this.tarifasService.actualizarTarifas(body, sesion.sub);
   }
 
   @Patch(':id')
   @Autenticado('ADMINISTRADOR')
-  @Auditar('MODIFICAR_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Modificar una tarifa vigente',
     description:
@@ -160,8 +162,9 @@ export class TarifasController {
   modificarTarifa(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: ModificarTarifaDto,
+    @UsuarioActual() sesion: SesionUsuario,
   ) {
-    return this.tarifasService.modificarTarifa(id, body);
+    return this.tarifasService.modificarTarifa(id, body, sesion.sub);
   }
 
   @Get(':id')

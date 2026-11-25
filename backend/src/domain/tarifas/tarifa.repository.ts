@@ -18,6 +18,7 @@ export interface NuevaVersionTarifa {
   valorDiurno: string;
   valorNocturno: string;
   tarifaEsperadaId?: string;
+  usuarioId?: string;
 }
 
 export interface ResultadoVersionTarifa {

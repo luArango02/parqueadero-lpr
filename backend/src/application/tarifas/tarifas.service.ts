@@ -71,6 +71,7 @@ export class TarifasService {
 
   async actualizarTarifas(
     datos: ActualizarTarifasInput,
+    usuarioId?: string,
   ): Promise<ResultadoVersionTarifa> {
     this.validarSedeId(datos.sedeId);
 
@@ -99,12 +100,14 @@ export class TarifasService {
       tipoVehiculo: datos.tipoVehiculo,
       valorDiurno: datos.valorDiurno.toFixed(2),
       valorNocturno: datos.valorNocturno.toFixed(2),
+      ...(usuarioId ? { usuarioId } : {}),
     });
   }
 
   async modificarTarifa(
     id: string,
     datos: ModificarTarifaInput,
+    usuarioId?: string,
   ): Promise<ResultadoVersionTarifa> {
     const tarifa = await this.buscarPorId(id);
 
@@ -162,6 +165,7 @@ export class TarifasService {
       valorDiurno: valorDiurno.toFixed(2),
       valorNocturno: valorNocturno.toFixed(2),
       tarifaEsperadaId: tarifa.id,
+      ...(usuarioId ? { usuarioId } : {}),
     });
   }
 
