@@ -21,6 +21,9 @@ describe('PATCH /api/detecciones/:id/validacion (e2e)', () => {
     onModuleInit: jest.fn(),
     onModuleDestroy: jest.fn(),
     deteccion: { findUnique: jest.fn(() => Promise.resolve(null)) },
+    permanencia: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   };
   const tokenDe = (rol: 'ADMINISTRADOR' | 'OPERADOR') =>
     app

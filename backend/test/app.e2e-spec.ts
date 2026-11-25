@@ -31,6 +31,9 @@ describe('API (e2e)', () => {
         }),
       ),
     },
+    permanencia: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   };
   const tokenDe = (rol: 'ADMINISTRADOR' | 'OPERADOR') =>
     app

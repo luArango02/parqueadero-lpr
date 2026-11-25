@@ -38,7 +38,9 @@ describe('VerificarCambioDiaService - ACT-020', () => {
       garantizarCobrosPorCambioDeDia: garantizarCobros,
     } as unknown as SalidaRepositorio;
 
-    servicio = new VerificarCambioDiaService(prisma, repositorio);
+    servicio = new VerificarCambioDiaService(prisma, repositorio, {
+      ahora: () => new Date('2026-11-24T11:00:00.000Z'),
+    });
   });
 
   it('consulta solamente las permanencias activas', async () => {

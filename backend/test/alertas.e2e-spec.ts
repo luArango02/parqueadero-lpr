@@ -28,6 +28,9 @@ describe('Alertas (e2e)', () => {
       findMany: jest.fn(() => Promise.resolve([])),
       findUnique: jest.fn(() => Promise.resolve(null)),
     },
+    permanencia: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   };
   const tokenDe = (rol: 'ADMINISTRADOR' | 'OPERADOR') =>
     app

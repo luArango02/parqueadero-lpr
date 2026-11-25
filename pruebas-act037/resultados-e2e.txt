@@ -1,0 +1,116 @@
+============================================================
+ACT-037 - PRUEBAS DE REGLAS DE NEGOCIO
+EVIDENCIA DE PRUEBAS END-TO-END (E2E)
+============================================================
+
+Fecha: 25/11/2026
+Rama: feature/ACT-037-pruebas-reglas-negocio
+Framework: Jest
+Cliente HTTP de pruebas: Supertest
+
+============================================================
+1. OBJETIVO
+============================================================
+
+Verificar el funcionamiento de las pruebas E2E existentes
+del backend despues de implementar el reloj controlado
+y corregir los dobles de PrismaService utilizados durante
+la inicializacion de la aplicacion.
+
+============================================================
+2. CORRECCIONES REALIZADAS
+============================================================
+
+Se actualizaron los dobles de PrismaService en los
+siguientes archivos:
+
+- backend/test/alertas.e2e-spec.ts
+- backend/test/app.e2e-spec.ts
+- backend/test/tiempo-real.e2e-spec.ts
+- backend/test/validacion-deteccion.e2e-spec.ts
+
+Se incorporo la propiedad:
+
+permanencia: {
+  findMany: jest.fn().mockResolvedValue([]),
+},
+
+Esta propiedad permite que VerificarCambioDiaService
+consulte las permanencias activas durante el arranque
+de la aplicacion de pruebas.
+
+La correccion se realizo exclusivamente en los dobles
+de prueba, sin modificar las reglas de negocio.
+
+============================================================
+3. EJECUCION DEFINITIVA
+============================================================
+
+Comando ejecutado:
+
+npm run test:e2e -- --runInBand
+
+Salida:
+
+> parqueadero-lpr-backend@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json --runInBand
+
+PASS test/alertas.e2e-spec.ts
+PASS test/app.e2e-spec.ts
+PASS test/validacion-deteccion.e2e-spec.ts
+PASS test/tiempo-real.e2e-spec.ts
+PASS test/pagos.e2e-spec.ts
+
+Test Suites: 5 passed, 5 total
+Tests:       29 passed, 29 total
+Snapshots:   0 total
+Time:        6.535 s, estimated 14 s
+Ran all test suites.
+
+============================================================
+4. VALIDACIONES ADICIONALES
+============================================================
+
+Comando:
+
+npx prettier --write test/alertas.e2e-spec.ts
+
+Resultado:
+
+test/alertas.e2e-spec.ts 63ms (unchanged)
+
+Comando:
+
+npx eslint test/alertas.e2e-spec.ts
+
+Resultado:
+
+Sin errores reportados.
+
+Comando:
+
+git --no-pager diff --check
+
+Resultado:
+
+Sin errores reportados.
+
+============================================================
+5. CONCLUSION
+============================================================
+
+Suites ejecutadas: 5
+Suites aprobadas: 5
+Pruebas ejecutadas: 29
+Pruebas aprobadas: 29
+Pruebas fallidas: 0
+Porcentaje de exito: 100%
+
+La ejecucion definitiva no presento errores de
+inicializacion del servicio VerificarCambioDiaService.
+
+Se verifico que las pruebas E2E existentes continuan
+funcionando correctamente despues de los cambios
+introducidos en ACT-037.
+
+Resultado: APROBADO.

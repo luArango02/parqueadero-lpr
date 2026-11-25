@@ -5,6 +5,7 @@ import {
   OnApplicationBootstrap,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { RELOJ, type Reloj } from '../../domain/tiempo/reloj';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import {
   SALIDA_REPOSITORIO,
@@ -20,6 +21,8 @@ export class VerificarCambioDiaService implements OnApplicationBootstrap {
     private readonly prisma: PrismaService,
     @Inject(SALIDA_REPOSITORIO)
     private readonly salidaRepositorio: SalidaRepositorio,
+    @Inject(RELOJ)
+    private readonly reloj: Reloj,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -36,7 +39,7 @@ export class VerificarCambioDiaService implements OnApplicationBootstrap {
 
     this.ejecutando = true;
 
-    const ahora = new Date();
+    const ahora = this.reloj.ahora();
     let verificadas = 0;
     let errores = 0;
 

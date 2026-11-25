@@ -39,6 +39,9 @@ describe('Tiempo real (e2e)', () => {
             ]),
           ),
         },
+        permanencia: {
+          findMany: jest.fn().mockResolvedValue([]),
+        },
       })
       .compile();
     app = modulo.createNestApplication();
