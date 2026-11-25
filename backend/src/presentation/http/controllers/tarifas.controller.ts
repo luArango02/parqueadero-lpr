@@ -26,8 +26,14 @@ import { TarifasService } from '../../../application/tarifas/tarifas.service';
 
 import { CrearVersionTarifaDto } from '../dto/tarifas/crear-version-tarifa.dto';
 import { ModificarTarifaDto } from '../dto/tarifas/modificar-tarifa.dto';
-import { Auditar } from '../auditoria/auditar.decorator';
 import { Autenticado } from '../auth/autenticado.decorator';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
+import {
+  TarifaRespuestaDto,
+  VersionTarifaRespuestaDto,
+} from '../docs/respuestas/tarifa-respuesta.dto';
+import { UsuarioActual } from '../auth/usuario-actual.decorator';
+import type { SesionUsuario } from '../../../application/auth/emisor-token';
 
 @ApiTags('Tarifas')
 @Controller('tarifas')
@@ -48,10 +54,13 @@ export class TarifasController {
     description: 'UUID de la sede.',
   })
   @ApiOkResponse({
-    description: 'Listado de tarifas obtenido correctamente.',
+    description: 'Listado de tarifas vigentes e históricas',
+    type: TarifaRespuestaDto,
+    isArray: true,
   })
   @ApiBadRequestResponse({
-    description: 'El identificador de la sede no es valido.',
+    description: 'El identificador de la sede no es válido',
+    type: ErrorHttpDto,
   })
   listar(@Query('sedeId', new ParseUUIDPipe()) sedeId: string) {
     return this.tarifasService.listar(sedeId);
@@ -78,10 +87,13 @@ export class TarifasController {
     description: 'Fecha ISO 8601 con hora.',
   })
   @ApiOkResponse({
-    description: 'Tarifas vigentes obtenidas correctamente.',
+    description: 'Tarifas vigentes para la fecha consultada',
+    type: TarifaRespuestaDto,
+    isArray: true,
   })
   @ApiBadRequestResponse({
-    description: 'La sede o la fecha proporcionada no es valida.',
+    description: 'El identificador de la sede o la fecha no son válidos',
+    type: ErrorHttpDto,
   })
   listarVigentes(
     @Query('sedeId', new ParseUUIDPipe()) sedeId: string,
@@ -107,32 +119,36 @@ export class TarifasController {
 
   @Post(['', 'versiones'])
   @Autenticado('ADMINISTRADOR')
-  @Auditar('CREAR_VERSION_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Crear una nueva version de tarifas',
     description:
       'Registra una nueva version del par de tarifas diurna y nocturna. Conserva el historial y no modifica los cobros existentes. Las motocicletas pueden tener ambas tarifas en cero.',
   })
   @ApiCreatedResponse({
-    description:
-      'Nueva version creada correctamente. Devuelve las tarifas diurna y nocturna.',
+    description: 'Nueva versión del par de tarifas creada correctamente',
+    type: VersionTarifaRespuestaDto,
   })
   @ApiBadRequestResponse({
-    description: 'Datos invalidos o relacion incorrecta entre tarifas.',
+    description: 'Datos inválidos o relación incorrecta entre tarifas',
+    type: ErrorHttpDto,
   })
   @ApiNotFoundResponse({
-    description: 'La sede indicada no existe.',
+    description: 'La sede indicada no existe',
+    type: ErrorHttpDto,
   })
   @ApiConflictResponse({
-    description: 'Conflicto durante el versionamiento.',
+    description: 'Conflicto durante el versionamiento',
+    type: ErrorHttpDto,
   })
-  crearVersion(@Body() body: CrearVersionTarifaDto) {
-    return this.tarifasService.actualizarTarifas(body);
+  crearVersion(
+    @Body() body: CrearVersionTarifaDto,
+    @UsuarioActual() sesion: SesionUsuario,
+  ) {
+    return this.tarifasService.actualizarTarifas(body, sesion.sub);
   }
 
   @Patch(':id')
   @Autenticado('ADMINISTRADOR')
-  @Auditar('MODIFICAR_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Modificar una tarifa vigente',
     description:
@@ -145,23 +161,28 @@ export class TarifasController {
     format: 'uuid',
   })
   @ApiOkResponse({
-    description: 'Tarifa modificada. Se devuelve el nuevo par de tarifas.',
+    description: 'Tarifa modificada mediante una nueva versión del par',
+    type: VersionTarifaRespuestaDto,
   })
   @ApiBadRequestResponse({
-    description: 'UUID o valor invalido, o regla tarifaria incumplida.',
+    description: 'UUID o valor inválido, o regla tarifaria incumplida',
+    type: ErrorHttpDto,
   })
   @ApiNotFoundResponse({
-    description: 'La tarifa no existe.',
+    description: 'La tarifa no existe',
+    type: ErrorHttpDto,
   })
   @ApiConflictResponse({
     description:
-      'La tarifa ya no esta vigente o se detecto un conflicto de actualizacion.',
+      'La tarifa ya no está vigente, el par está incompleto o existe un conflicto de actualización',
+    type: ErrorHttpDto,
   })
   modificarTarifa(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() body: ModificarTarifaDto,
+    @UsuarioActual() sesion: SesionUsuario,
   ) {
-    return this.tarifasService.modificarTarifa(id, body);
+    return this.tarifasService.modificarTarifa(id, body, sesion.sub);
   }
 
   @Get(':id')
@@ -177,13 +198,16 @@ export class TarifasController {
     format: 'uuid',
   })
   @ApiOkResponse({
-    description: 'Tarifa encontrada correctamente.',
+    description: 'Tarifa vigente o histórica encontrada correctamente',
+    type: TarifaRespuestaDto,
   })
   @ApiBadRequestResponse({
-    description: 'El identificador no es un UUID valido.',
+    description: 'El identificador no es un UUID válido',
+    type: ErrorHttpDto,
   })
   @ApiNotFoundResponse({
-    description: 'La tarifa no existe.',
+    description: 'La tarifa no existe',
+    type: ErrorHttpDto,
   })
   buscarPorId(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.tarifasService.buscarPorId(id);
