@@ -5,6 +5,7 @@ body {
 }
 
 input,
+select,
 button {
   font-size: 16px;
   padding: 6px 10px;

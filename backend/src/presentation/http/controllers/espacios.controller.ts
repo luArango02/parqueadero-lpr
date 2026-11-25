@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -28,6 +29,9 @@ import { ListarEspaciosUseCase } from '../../../application/espacios/listar-espa
 import { ActualizarEspacioDto } from '../dto/actualizar-espacio.dto';
 import { CrearEspacioDto } from '../dto/crear-espacio.dto';
 import { ListarEspaciosQueryDto } from '../dto/listar-espacios.query.dto';
+import { NotificarOcupacionInterceptor } from '../../../infrastructure/tiempo-real/notificar-ocupacion.interceptor';
+import { Auditar } from '../auditoria/auditar.decorator';
+import { Autenticado } from '../auth/autenticado.decorator';
 
 @ApiTags('Espacios')
 @Controller('espacios')
@@ -51,6 +55,9 @@ export class EspaciosController {
   }
 
   @Post()
+  @Autenticado('ADMINISTRADOR')
+  @Auditar('CREAR_ESPACIO', 'Espacio')
+  @UseInterceptors(NotificarOcupacionInterceptor)
   @ApiOperation({
     summary: 'Crear un espacio',
     description:
@@ -64,6 +71,9 @@ export class EspaciosController {
   }
 
   @Patch(':id')
+  @Autenticado('ADMINISTRADOR')
+  @Auditar('MODIFICAR_ESPACIO', 'Espacio')
+  @UseInterceptors(NotificarOcupacionInterceptor)
   @ApiOperation({
     summary: 'Cambiar el estado o el tipo compatible de un espacio',
     description:

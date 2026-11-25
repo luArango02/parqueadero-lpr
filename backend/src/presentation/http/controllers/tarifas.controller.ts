@@ -26,6 +26,8 @@ import { TarifasService } from '../../../application/tarifas/tarifas.service';
 
 import { CrearVersionTarifaDto } from '../dto/tarifas/crear-version-tarifa.dto';
 import { ModificarTarifaDto } from '../dto/tarifas/modificar-tarifa.dto';
+import { Auditar } from '../auditoria/auditar.decorator';
+import { Autenticado } from '../auth/autenticado.decorator';
 
 @ApiTags('Tarifas')
 @Controller('tarifas')
@@ -104,6 +106,8 @@ export class TarifasController {
   }
 
   @Post(['', 'versiones'])
+  @Autenticado('ADMINISTRADOR')
+  @Auditar('CREAR_VERSION_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Crear una nueva version de tarifas',
     description:
@@ -127,6 +131,8 @@ export class TarifasController {
   }
 
   @Patch(':id')
+  @Autenticado('ADMINISTRADOR')
+  @Auditar('MODIFICAR_TARIFA', 'Tarifa')
   @ApiOperation({
     summary: 'Modificar una tarifa vigente',
     description:
