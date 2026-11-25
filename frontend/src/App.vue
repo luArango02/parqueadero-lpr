@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { cerrarSesion, usuarioActual } from './admin/sesion'
 import IndicadorConexion from './components/IndicadorConexion.vue'
+
+const router = useRouter()
+
+function salir() {
+  cerrarSesion()
+  router.push('/carril/entrada')
+}
 </script>
 
 <template>
@@ -11,8 +19,15 @@ import IndicadorConexion from './components/IndicadorConexion.vue'
       <RouterLink to="/carril/salida">Salida</RouterLink>
       <RouterLink to="/mapa">Mapa</RouterLink>
       <RouterLink to="/panel">Panel</RouterLink>
+      <RouterLink to="/admin">Admin</RouterLink>
     </nav>
-    <IndicadorConexion />
+    <div class="derecha">
+      <span v-if="usuarioActual">
+        {{ usuarioActual.nombre }}
+        <button class="salir" @click="salir">Salir</button>
+      </span>
+      <IndicadorConexion />
+    </div>
   </header>
   <main>
     <RouterView />
@@ -42,5 +57,15 @@ main {
   max-width: 800px;
   margin: 0 auto;
   padding: 16px;
+}
+.derecha {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.salir {
+  font-size: 14px;
+  padding: 2px 8px;
+  margin-left: 6px;
 }
 </style>
