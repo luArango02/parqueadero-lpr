@@ -32,6 +32,8 @@ const { alEvento, alReconectar } = useTiempoReal()
 
 // Si la conexión se cae y vuelve, se piden de nuevo los espacios por si se perdió algún evento.
 alReconectar(cargar)
+// Cambios hechos desde Administración (por ejemplo, un espacio fuera de servicio).
+alEvento('ocupacion:actualizada', cargar)
 alEvento('acceso:ingreso', (evento) => {
   espacios.value = aplicarIngreso(espacios.value, evento)
 })

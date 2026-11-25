@@ -71,8 +71,13 @@ Ejemplo: en **Accesos → POST /api/accesos/ingreso**, *Try it out*, con el cuer
 |---|---|
 | `GET /api/auth/profile` | Cualquier usuario autenticado |
 | `GET /api/usuarios`, `POST /api/usuarios`, `PATCH /api/usuarios/{id}` | Solo `ADMINISTRADOR` |
+| `POST/PATCH /api/tarifas`, `POST/PATCH /api/espacios` | Solo `ADMINISTRADOR`; cada cambio queda en `auditoria` |
 
 Las claves se guardan con bcrypt y cada creación o modificación de usuarios queda en la tabla `auditoria`.
+
+En el frontend, la pantalla **Admin** (`/admin`) pide iniciar sesión con un administrador y permite cambiar tarifas (con la validación de nocturna menor que diurna junto al campo), poner espacios fuera de servicio y agregar espacios. El mapa y el panel se actualizan solos con esos cambios.
+
+Para auditar un endpoint se agrega `@Auditar('ACCION', 'Entidad')` junto a `@Autenticado(...)`.
 
 Para proteger un endpoint nuevo basta con el decorador `@Autenticado()` (cualquier rol) o `@Autenticado('ADMINISTRADOR')` en el controlador o en el método.
 

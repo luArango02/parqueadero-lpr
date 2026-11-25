@@ -42,6 +42,7 @@ const { alEvento, alReconectar } = useTiempoReal()
 // Cada intento del carril (autorizado o denegado) llega ya guardado en la base de datos.
 alEvento('barrera:actualizada', refrescar)
 alReconectar(refrescar)
+alEvento('ocupacion:actualizada', refrescar)
 
 onMounted(() => {
   refrescar()
