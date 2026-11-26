@@ -1,0 +1,245 @@
+{
+  "total": 34,
+  "aprobadas": 34,
+  "fallidas": 0,
+  "resultados": [
+    {
+      "nombre": "Estado del servicio",
+      "metodo": "GET",
+      "plantilla": "/health",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Sede actual",
+      "metodo": "GET",
+      "plantilla": "/api/sedes/actual",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Login administrador",
+      "metodo": "POST",
+      "plantilla": "/api/auth/login",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Login operador",
+      "metodo": "POST",
+      "plantilla": "/api/auth/login",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Perfil autenticado",
+      "metodo": "GET",
+      "plantilla": "/api/auth/profile",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Perfil sin autenticacion",
+      "metodo": "GET",
+      "plantilla": "/api/auth/profile",
+      "estado": 401,
+      "aprobado": true
+    },
+    {
+      "nombre": "Perfil con token invalido",
+      "metodo": "GET",
+      "plantilla": "/api/auth/profile",
+      "estado": 401,
+      "aprobado": true
+    },
+    {
+      "nombre": "Credenciales incorrectas",
+      "metodo": "POST",
+      "plantilla": "/api/auth/login",
+      "estado": 401,
+      "aprobado": true
+    },
+    {
+      "nombre": "Login con datos invalidos",
+      "metodo": "POST",
+      "plantilla": "/api/auth/login",
+      "estado": 400,
+      "aprobado": true
+    },
+    {
+      "nombre": "Listado de usuarios",
+      "metodo": "GET",
+      "plantilla": "/api/usuarios",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Listado de usuarios prohibido",
+      "metodo": "GET",
+      "plantilla": "/api/usuarios",
+      "estado": 403,
+      "aprobado": true
+    },
+    {
+      "nombre": "Tarifas vigentes",
+      "metodo": "GET",
+      "plantilla": "/api/tarifas/vigentes",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Historial de tarifas",
+      "metodo": "GET",
+      "plantilla": "/api/tarifas",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Tarifa por identificador",
+      "metodo": "GET",
+      "plantilla": "/api/tarifas/{id}",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Tarifa con UUID invalido",
+      "metodo": "GET",
+      "plantilla": "/api/tarifas/{id}",
+      "estado": 400,
+      "aprobado": true
+    },
+    {
+      "nombre": "Listado de espacios",
+      "metodo": "GET",
+      "plantilla": "/api/espacios",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Disponibilidad por zona",
+      "metodo": "GET",
+      "plantilla": "/api/espacios/disponibilidad",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Cupos disponibles",
+      "metodo": "GET",
+      "plantilla": "/api/cupos",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Listado de vehiculos",
+      "metodo": "GET",
+      "plantilla": "/api/vehiculos",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Consulta de carro",
+      "metodo": "GET",
+      "plantilla": "/api/vehiculos/{placa}",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Consulta de motocicleta",
+      "metodo": "GET",
+      "plantilla": "/api/vehiculos/{placa}",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Pase de carro",
+      "metodo": "GET",
+      "plantilla": "/api/pases/{placa}",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Pase de motocicleta sin cobro",
+      "metodo": "GET",
+      "plantilla": "/api/pases/{placa}",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Pase sin autenticacion",
+      "metodo": "GET",
+      "plantilla": "/api/pases/{placa}",
+      "estado": 401,
+      "aprobado": true
+    },
+    {
+      "nombre": "Listado de alertas",
+      "metodo": "GET",
+      "plantilla": "/api/alertas",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Alertas abiertas",
+      "metodo": "GET",
+      "plantilla": "/api/alertas",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Alertas resueltas",
+      "metodo": "GET",
+      "plantilla": "/api/alertas",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Alertas sin autenticacion",
+      "metodo": "GET",
+      "plantilla": "/api/alertas",
+      "estado": 401,
+      "aprobado": true
+    },
+    {
+      "nombre": "Eventos recientes",
+      "metodo": "GET",
+      "plantilla": "/api/eventos/recientes",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Historial de eventos",
+      "metodo": "GET",
+      "plantilla": "/api/eventos/historial",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Historial con filtro invalido",
+      "metodo": "GET",
+      "plantilla": "/api/eventos/historial",
+      "estado": 400,
+      "aprobado": true
+    },
+    {
+      "nombre": "Consulta de auditoria",
+      "metodo": "GET",
+      "plantilla": "/api/auditoria",
+      "estado": 200,
+      "aprobado": true
+    },
+    {
+      "nombre": "Auditoria prohibida para operador",
+      "metodo": "GET",
+      "plantilla": "/api/auditoria",
+      "estado": 403,
+      "aprobado": true
+    },
+    {
+      "nombre": "Auditoria con paginacion invalida",
+      "metodo": "GET",
+      "plantilla": "/api/auditoria",
+      "estado": 400,
+      "aprobado": true
+    }
+  ]
+}

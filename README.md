@@ -61,6 +61,29 @@ Con el backend corriendo, abrir http://localhost:3000/docs. Ahí aparecen todos 
 
 Ejemplo: en **Accesos → POST /api/accesos/ingreso**, *Try it out*, con el cuerpo `{ "placa": "ABC123" }` registra el ingreso de un carro. La respuesta indica si la barrera abre, el espacio asignado y el cobro generado.
 
+### Colección Bruno y validación de contratos
+
+La documentación OpenAPI incluye los esquemas de respuesta,
+ejemplos, errores HTTP y requisitos de autenticación de las
+operaciones implementadas.
+
+- OpenAPI JSON: http://localhost:3000/docs-json
+- [Colección Bruno y guía de ejecución](bruno/README.md).
+- [Contrato OpenAPI validado](pruebas-parq41/openapi.json).
+- [Evidencias de validación PARQ-41](pruebas-parq41/README.md).
+- [Hallazgo de concurrencia pendiente](pruebas-parq41/hallazgo-concurrencia.md).
+
+La colección Bruno contiene 180 solicitudes distintas y un
+ejecutor automatizado de 11 bloques de regresión.
+
+Para ejecutar la regresión completa se requiere un backend
+independiente en el puerto 3001 y una base de pruebas aislada,
+según las instrucciones de la colección.
+
+No ejecutar los flujos automatizados sobre la base principal
+de desarrollo ni sobre producción.
+
+
 ## Autenticación y roles
 
 1. `POST /api/auth/login` con correo y clave devuelve un `accessToken` (JWT, dura `JWT_EXPIRES_IN`).

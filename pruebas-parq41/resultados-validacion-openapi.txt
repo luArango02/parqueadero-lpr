@@ -1,0 +1,37 @@
+PARQ-41 - Validacion de contratos OpenAPI
+Fecha: 25/11/2026
+
+OpenAPI: 3.0.0
+Rutas: 28
+Operaciones HTTP: 33
+Operaciones documentadas: 33
+Esquemas: 45
+Operaciones protegidas mediante JWT: 16
+Referencias invalidas: 0
+
+Validacion Redocly: APROBADA
+Equivalencia entre documento generado y documento runtime: APROBADA
+
+Validacion AJV:
+- Propiedades de objeto anulables: 5
+- Propiedades enumeradas anulables: 5
+- Comprobaciones ejecutadas: 62
+- Comprobaciones aprobadas: 62
+- Comprobaciones fallidas: 0
+
+Validacion de respuestas HTTP reales:
+- Respuestas verificadas: 34
+- Respuestas aprobadas: 34
+- Respuestas fallidas: 0
+
+Calidad del codigo:
+- Compilacion NestJS: APROBADA
+- Validacion Prisma: APROBADA
+- Prettier: APROBADO
+- ESLint: APROBADO
+- Archivos TypeScript verificados: 36
+- git diff --check: APROBADO
+
+Este archivo consolida los resultados observados durante PARQ-41.
+La validacion HTTP real cubre una seleccion de respuestas y no
+todos los posibles resultados de las 33 operaciones.

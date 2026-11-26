@@ -1,0 +1,107 @@
+PARQ-41 - Regresion final Jest
+Fecha de ejecucion: 25/11/2026
+
+===== jest-final-unitarias-corregido.txt =====
+PASS src/application/accesos/verificar-cambio-dia.service.spec.ts
+PASS src/presentation/http/auditoria/auditoria.interceptor.spec.ts
+PASS src/infrastructure/tiempo-real/socket-io-notificador-accesos.spec.ts
+PASS src/presentation/http/controllers/health.controller.spec.ts
+PASS src/application/auth/iniciar-sesion.use-case.spec.ts
+PASS src/application/eventos/listar-eventos-recientes.use-case.spec.ts
+PASS src/application/usuarios/gestion-usuarios.service.spec.ts
+PASS src/application/alertas/alertas.use-cases.spec.ts
+PASS src/infrastructure/lectores/simulador-lector-placas.spec.ts
+PASS src/application/pases/consultar-pase-vigente.use-case.spec.ts
+PASS src/application/auditoria/listar-auditoria.use-case.spec.ts
+PASS src/application/vehiculos/vehiculos.use-cases.spec.ts
+PASS src/application/cobros/calcular-cobro.service.spec.ts
+PASS src/application/detecciones/validar-deteccion.use-case.spec.ts
+PASS src/application/eventos/listar-historial-eventos.use-case.spec.ts
+PASS src/application/tarifas/tarifas.service.spec.ts
+PASS src/application/accesos/registrar-ingreso.use-case.spec.ts
+PASS src/application/detecciones/registrar-deteccion.use-case.spec.ts
+PASS src/infrastructure/repositories/prisma-pago.repository.spec.ts
+PASS src/application/pagos/registrar-pago-efectivo.use-case.spec.ts
+PASS src/application/espacios/espacios.use-cases.spec.ts
+PASS src/application/espacios/cupos.use-cases.spec.ts
+PASS src/application/accesos/registrar-salida.use-case.spec.ts
+PASS src/domain/tiempo/reglas-horario.spec.ts
+PASS src/domain/vehiculos/placa.spec.ts
+PASS src/domain/tiempo/dias-operativos-transcurridos.spec.ts
+PASS src/domain/tarifas/tarifa.rules.spec.ts
+PASS src/domain/detecciones/deteccion.spec.ts
+PASS src/domain/cobros/estrategias/cobro-strategies.spec.ts
+PASS src/domain/espacios/cupos.spec.ts
+PASS src/domain/espacios/espacio.spec.ts
+PASS src/domain/alertas/alerta.spec.ts
+PASS src/domain/eventos/evento-reciente.spec.ts
+PASS src/application/auditoria/proteger-datos-auditoria.spec.ts
+PASS src/domain/vehiculos/estado-vehiculo.spec.ts
+PASS src/domain/detecciones/validacion.spec.ts
+Test Suites: 36 passed, 36 total
+Tests:       317 passed, 317 total
+Snapshots:   0 total
+Time:        9.215 s, estimated 11 s
+
+===== jest-final-integracion-pagos.txt =====
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        1.183 s
+
+===== jest-final-integracion-auditoria.txt =====
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
+Time:        1.032 s
+
+===== jest-final-integracion-salidas.txt =====
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        1.284 s
+
+===== jest-final-integracion-tarifas.txt =====
+Test Suites: 1 passed, 1 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        1.086 s
+
+===== jest-final-e2e.txt =====
+PASS test/alertas.e2e-spec.ts
+PASS test/app.e2e-spec.ts
+PASS test/validacion-deteccion.e2e-spec.ts
+PASS test/tiempo-real.e2e-spec.ts
+PASS test/pagos.e2e-spec.ts
+Test Suites: 6 passed, 6 total
+Tests:       41 passed, 41 total
+Snapshots:   0 total
+Time:        12.654 s
+
+===== jest-final-escenarios-reglas-negocio.txt =====
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 25 passed, 26 total
+Snapshots:   0 total
+Time:        10.268 s
+
+===== jest-final-integracion-accesos-espacios.txt =====
+PASS test-parq41-temporal/integracion/accesos-espacios.integracion-spec.ts (9.668 s)
+PASS test-parq41-temporal/integracion/base-pruebas.integracion-spec.ts
+Test Suites: 2 passed, 2 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        9.949 s
+
+===== RESULTADO CONSOLIDADO =====
+Suites ejecutadas: 49
+Suites aprobadas: 48
+Suites fallidas: 1
+Pruebas ejecutadas: 422
+Pruebas aprobadas: 421
+Pruebas fallidas: 1
+
+Fallo pendiente:
+RN-04: ingresos simultaneos de una misma placa no duplican cobros ni permanencias.
+Prisma P2002: restriccion de unicidad vehiculo_activo_id.
+Los archivos responsables coinciden con origin/develop.
+Consultar hallazgo-concurrencia.md.
