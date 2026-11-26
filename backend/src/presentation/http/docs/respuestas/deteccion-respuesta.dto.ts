@@ -24,7 +24,8 @@ export class EvidenciaDeteccionRespuestaDto {
   confianza!: number;
 
   @ApiProperty({
-    enum: TIPOS_VEHICULO,
+    type: String,
+    enum: [...TIPOS_VEHICULO, null],
     nullable: true,
     example: 'CARRO',
   })

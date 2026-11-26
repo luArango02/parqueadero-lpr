@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { PaginacionRespuestaDto } from './paginacion-respuesta.dto';
 
 export class UsuarioAuditoriaRespuestaDto {
@@ -22,6 +22,7 @@ export class UsuarioAuditoriaRespuestaDto {
   rol!: string;
 }
 
+@ApiExtraModels(UsuarioAuditoriaRespuestaDto)
 export class RegistroAuditoriaRespuestaDto {
   @ApiProperty({
     type: String,
@@ -39,8 +40,10 @@ export class RegistroAuditoriaRespuestaDto {
   usuarioId!: string | null;
 
   @ApiProperty({
-    type: () => UsuarioAuditoriaRespuestaDto,
-    nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(UsuarioAuditoriaRespuestaDto) },
+      { type: 'object', nullable: true, enum: [null] },
+    ],
     description: 'Usuario asociado a la operación, cuando existe',
   })
   usuario!: UsuarioAuditoriaRespuestaDto | null;

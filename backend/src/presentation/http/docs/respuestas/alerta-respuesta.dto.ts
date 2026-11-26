@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import {
   ESTADOS_ALERTA,
   TIPOS_ALERTA,
@@ -22,6 +22,7 @@ export class ResponsableAlertaRespuestaDto {
   nombre!: string;
 }
 
+@ApiExtraModels(ResponsableAlertaRespuestaDto, EvidenciaDeteccionRespuestaDto)
 export class AlertaRespuestaDto {
   @ApiProperty({
     format: 'uuid',
@@ -77,15 +78,19 @@ export class AlertaRespuestaDto {
   resolucion!: string | null;
 
   @ApiProperty({
-    type: ResponsableAlertaRespuestaDto,
-    nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(ResponsableAlertaRespuestaDto) },
+      { type: 'object', nullable: true, enum: [null] },
+    ],
     example: null,
   })
   resueltaPor!: ResponsableAlertaRespuestaDto | null;
 
   @ApiProperty({
-    type: EvidenciaDeteccionRespuestaDto,
-    nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(EvidenciaDeteccionRespuestaDto) },
+      { type: 'object', nullable: true, enum: [null] },
+    ],
     description: 'Detección asociada a la alerta, cuando existe',
     example: {
       id: '550e8400-e29b-41d4-a716-446655440003',

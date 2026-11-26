@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 
 export class CobroDelDiaRespuestaDto {
   @ApiProperty({
@@ -34,6 +34,7 @@ export class CobroDelDiaRespuestaDto {
   diaOperativo!: string;
 }
 
+@ApiExtraModels(CobroDelDiaRespuestaDto)
 export class IngresoRespuestaDto {
   @ApiProperty({ example: true })
   autorizado!: boolean;
@@ -54,7 +55,7 @@ export class IngresoRespuestaDto {
 
   @ApiProperty({
     type: String,
-    enum: ['CARRO', 'MOTO'],
+    enum: ['CARRO', 'MOTO', null],
     nullable: true,
     example: 'CARRO',
   })
@@ -69,8 +70,10 @@ export class IngresoRespuestaDto {
   espacio!: string | null;
 
   @ApiProperty({
-    type: CobroDelDiaRespuestaDto,
-    nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(CobroDelDiaRespuestaDto) },
+      { type: 'object', nullable: true, enum: [null] },
+    ],
     description: 'Cobro asociado al día operativo, si aplica',
   })
   cobro!: CobroDelDiaRespuestaDto | null;
@@ -102,7 +105,7 @@ export class SalidaRespuestaDto {
 
   @ApiProperty({
     type: String,
-    enum: ['CARRO', 'MOTO'],
+    enum: ['CARRO', 'MOTO', null],
     nullable: true,
     example: 'CARRO',
   })

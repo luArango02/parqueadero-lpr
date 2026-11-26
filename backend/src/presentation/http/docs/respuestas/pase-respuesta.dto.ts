@@ -34,7 +34,7 @@ export class PaseVigenteRespuestaDto {
 
   @ApiProperty({
     type: String,
-    enum: ['PENDIENTE', 'PAGADO', 'ANULADO', 'VENCIDO'],
+    enum: ['PENDIENTE', 'PAGADO', 'ANULADO', 'VENCIDO', null],
     nullable: true,
     example: 'PAGADO',
   })

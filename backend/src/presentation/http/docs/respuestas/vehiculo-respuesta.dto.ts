@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { ESTADOS_VEHICULO } from '../../../../domain/vehiculos/estado-vehiculo';
 import type { EstadoVehiculo } from '../../../../domain/vehiculos/estado-vehiculo';
 import { TIPOS_VEHICULO } from '../../../../domain/vehiculos/placa';
@@ -25,6 +25,7 @@ export class PermanenciaActivaRespuestaDto {
   ingresoEn!: string;
 }
 
+@ApiExtraModels(PermanenciaActivaRespuestaDto)
 export class VehiculoRespuestaDto {
   @ApiProperty({
     format: 'uuid',
@@ -55,8 +56,10 @@ export class VehiculoRespuestaDto {
   estado!: EstadoVehiculo;
 
   @ApiProperty({
-    type: PermanenciaActivaRespuestaDto,
-    nullable: true,
+    oneOf: [
+      { $ref: getSchemaPath(PermanenciaActivaRespuestaDto) },
+      { type: 'object', nullable: true, enum: [null] },
+    ],
     description: 'Permanencia actual; null cuando el vehículo está fuera',
     example: null,
   })
