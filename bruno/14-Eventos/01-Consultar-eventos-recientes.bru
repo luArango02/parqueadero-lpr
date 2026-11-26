@@ -1,0 +1,51 @@
+meta {
+  name: Consultar eventos recientes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/recientes
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Respuesta es una lista de eventos", function () {
+    const datos = res.getBody();
+    expect(datos).to.be.an("array");
+    expect(datos.length).to.be.greaterThan(0);
+    expect(datos.length).to.be.at.most(20);
+  });
+
+  test("Contrato de eventos recientes", function () {
+    const tipos = [
+      "INGRESO", "SALIDA",
+      "INGRESO_DENEGADO", "SALIDA_DENEGADA",
+      "PAGO", "ALERTA"
+    ];
+
+    res.getBody().forEach(function (evento) {
+      expect(evento.id).to.be.a("string");
+      expect(tipos).to.include(evento.tipo);
+      expect(evento.placa === null ||
+        typeof evento.placa === "string").to.equal(true);
+      expect(evento.detalle).to.be.a("string");
+      expect(Number.isFinite(Date.parse(evento.ocurridoEn)))
+        .to.equal(true);
+    });
+  });
+
+  test("Orden cronologico descendente", function () {
+    const datos = res.getBody();
+
+    for (let i = 1; i < datos.length; i++) {
+      expect(Date.parse(datos[i - 1].ocurridoEn))
+        .to.be.at.least(Date.parse(datos[i].ocurridoEn));
+    }
+  });
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Rechazar creacion sin autenticacion
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/espacios
+  body: json
+  auth: none
+}
+
+body:json {
+{"zona":"Z","numero":{{numeroEspacioPrueba}},"tipoCompatible":"CARRO"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Contrato de error correcto", function() {
+    expect(res.getBody().statusCode).to.equal(401);
+  });
+}

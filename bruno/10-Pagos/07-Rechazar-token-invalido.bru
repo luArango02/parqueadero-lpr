@@ -1,0 +1,39 @@
+meta {
+  name: Rechazar pago con token invalido
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/pagos/efectivo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: token-invalido-parq41
+}
+
+body:json {
+  {"cobroId":"{{cobroId}}","referencia":"{{referenciaPago}}"}
+}
+
+script:pre-request {
+    if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+      throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+    }
+}
+
+tests {
+  test("HTTP 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Contrato de error HTTP", function () {
+    const body = res.getBody();
+    expect(body.statusCode).to.equal(401);
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("path");
+    expect(body).to.have.property("timestamp");
+  });
+}

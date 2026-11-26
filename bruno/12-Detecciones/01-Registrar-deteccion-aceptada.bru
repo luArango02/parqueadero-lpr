@@ -1,0 +1,71 @@
+meta {
+  name: Registrar deteccion con confianza suficiente
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/detecciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "abc 123",
+    "confianza": 0.98,
+    "tipoVisual": "CARRO",
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("deteccionAceptadaId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Placa normalizada", function() {
+    expect(res.getBody().placaLeida).to.equal("ABC123");
+  });
+
+  test("Deteccion aceptada", function() {
+    expect(res.getBody().estado).to.equal("ACEPTADA");
+  });
+
+  test("Confianza conservada", function() {
+    expect(res.getBody().confianza).to.equal(0.98);
+  });
+
+  test("Origen simulado", function() {
+    expect(res.getBody().origen).to.equal("SIMULADOR");
+  });
+
+  test("Umbral aplicado correctamente", function() {
+    expect(res.getBody().umbralAplicado).to.equal(0.8);
+  });
+
+  test("Carril correcto", function() {
+    expect(res.getBody().carrilId)
+      .to.equal(bru.getVar("carrilEntradaId"));
+  });
+
+  test("Tipo visual correcto", function() {
+    expect(res.getBody().tipoVisual).to.equal("CARRO");
+  });
+
+  test("Identificador disponible", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+}

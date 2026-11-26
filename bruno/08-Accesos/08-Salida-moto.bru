@@ -1,0 +1,51 @@
+meta {
+  name: Registrar salida de motocicleta sin pago
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/salida
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaMoto}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilSalidaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Salida autorizada sin pago", function() {
+    expect(res.getBody().autorizado).to.equal(true);
+  });
+
+  test("Barrera abierta", function() {
+    expect(res.getBody().barrera).to.equal("ABIERTA");
+  });
+
+  test("Tipo MOTO", function() {
+    expect(res.getBody().tipoVehiculo).to.equal("MOTO");
+  });
+
+  test("Espacio liberado", function() {
+    expect(res.getBody().espacioLiberado).to.be.a("string");
+  });
+
+  test("Sin cobros pendientes", function() {
+    expect(res.getBody().cobrosPendientes).to.have.lengthOf(0);
+  });
+}

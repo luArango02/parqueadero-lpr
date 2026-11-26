@@ -1,4 +1,3 @@
-
 import { Controller, Get, Param } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -11,18 +10,19 @@ import {
   type ResultadoConsultaPase,
 } from '../../../application/pases/consultar-pase-vigente.use-case';
 import { Autenticado } from '../auth/autenticado.decorator';
+import { PaseVigenteRespuestaDto } from '../docs/respuestas/pase-respuesta.dto';
 
 @ApiTags('Pases')
 @Controller('pases')
 export class PasesController {
-  constructor(
-    private readonly consultarPase: ConsultarPaseVigenteUseCase,
-  ) {}
+  constructor(private readonly consultarPase: ConsultarPaseVigenteUseCase) {}
 
   @Get(':placa')
   @Autenticado('ADMINISTRADOR', 'OPERADOR')
   @ApiOperation({
-    summary: 'Consultar el pase vigente de un vehiculo por placa',
+    summary: 'Consultar el pase vigente de un vehículo',
+    description:
+      'Consulta el estado del cobro correspondiente al día operativo actual. Un pase vigente permite reingresar sin generar otro cobro, pero no garantiza la disponibilidad de un espacio.',
   })
   @ApiParam({
     name: 'placa',
@@ -30,11 +30,10 @@ export class PasesController {
     example: 'ABC123',
   })
   @ApiOkResponse({
-    description: 'Estado del pase para el dia operativo actual de la sede',
+    description: 'Estado del pase para el día operativo actual',
+    type: PaseVigenteRespuestaDto,
   })
-  consultar(
-    @Param('placa') placa: string,
-  ): Promise<ResultadoConsultaPase> {
+  consultar(@Param('placa') placa: string): Promise<ResultadoConsultaPase> {
     return this.consultarPase.ejecutar(placa);
   }
 }

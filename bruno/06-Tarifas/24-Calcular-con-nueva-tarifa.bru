@@ -1,0 +1,46 @@
+meta {
+  name: Calcular cobro con nueva tarifa
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "sedeId": "{{sedeId}}",
+      "vehiculoId": "{{vehiculoId}}",
+      "fechaIngreso": "{{fechaCalculoNuevaTarifa}}"
+  }
+}
+
+script:pre-request {
+  const fecha = new Date(bru.getVar("fechaTarifaModificada"));
+  fecha.setTime(fecha.getTime() + 86400000);
+  fecha.setUTCHours(15, 0, 0, 0);
+  bru.setVar("fechaCalculoNuevaTarifa", fecha.toISOString());
+}
+
+tests {
+  test("HTTP 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Calculo con nuevo valor diurno", function () {
+      expect(res.getBody().franja).to.equal("DIURNA");
+      expect(Number(res.getBody().valor)).to.equal(10000);
+  });
+
+  test("Referencia a nueva tarifa", function () {
+      expect(res.getBody().tarifaId).to.equal(
+          bru.getVar("tarifaDiurnaModificadaId")
+      );
+      expect(res.getBody().tarifaVersion).to.equal(
+          Number(bru.getVar("versionTarifaModificada"))
+      );
+  });
+}

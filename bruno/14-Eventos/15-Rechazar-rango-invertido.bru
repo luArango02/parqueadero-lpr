@@ -1,0 +1,30 @@
+meta {
+  name: Rechazar-rango-invertido
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?desde=2026-11-26T00:00:00Z&hasta=2026-11-25T00:00:00Z
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Respuesta de error documentada", function () {
+    const body = res.getBody();
+
+    expect(body.statusCode).to.equal(400);
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("path");
+    expect(body).to.have.property("timestamp");
+  });
+}

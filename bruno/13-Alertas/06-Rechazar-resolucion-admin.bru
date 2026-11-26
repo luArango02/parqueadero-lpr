@@ -1,0 +1,38 @@
+meta {
+  name: Impedir resolucion por administrador
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/alertas/{{alertaAntiPassbackId}}/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "estado": "RESUELTA",
+    "resolucion": "Revision de prueba PARQ-41"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Administrador sin permiso", function() {
+    expect(res.getBody().statusCode).to.equal(403);
+  });
+}

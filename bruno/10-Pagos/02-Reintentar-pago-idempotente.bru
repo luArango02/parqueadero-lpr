@@ -1,0 +1,55 @@
+meta {
+  name: Reintentar pago idempotente
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/pagos/efectivo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {"cobroId":"{{cobroId}}","referencia":"{{referenciaPago}}"}
+}
+
+script:pre-request {
+    if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+      throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+    }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Recupera exactamente el mismo pago", function () {
+    expect(res.getBody().id).to.equal(bru.getVar("pagoId"));
+  });
+
+  test("Conserva el identificador del cobro", function () {
+    expect(res.getBody().cobroId).to.equal(bru.getVar("cobroId"));
+  });
+
+  test("Conserva la referencia original", function () {
+    expect(res.getBody().referencia).to.equal(bru.getVar("referenciaPago"));
+  });
+
+  test("El cobro permanece pagado", function () {
+    expect(res.getBody().estadoCobro).to.equal("PAGADO");
+  });
+
+  test("Conserva el valor original", function () {
+    expect(Number(res.getBody().valor)).to.equal(Number(bru.getVar("valorCobro")));
+  });
+
+  test("Conserva el medio efectivo", function () {
+    expect(res.getBody().medio).to.equal("EFECTIVO");
+  });
+}

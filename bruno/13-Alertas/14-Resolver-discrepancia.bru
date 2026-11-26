@@ -1,0 +1,65 @@
+meta {
+  name: Resolver discrepancia confirmando tipo real
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{baseUrl}}/api/alertas/{{alertaDiscrepanciaId}}/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "estado": "RESUELTA",
+    "resolucion": "Operador confirma que el vehiculo es un carro",
+    "tipoConfirmado": "CARRO"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Alerta resuelta", function() {
+    expect(res.getBody().estado).to.equal("RESUELTA");
+  });
+
+  test("Identificador conservado", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("alertaDiscrepanciaId"));
+  });
+
+  test("Operador responsable registrado", function() {
+    expect(res.getBody().resueltaPor.id)
+      .to.equal(bru.getVar("operadorId"));
+  });
+
+  test("Motivo conservado", function() {
+    expect(res.getBody().resolucion)
+      .to.equal("Operador confirma que el vehiculo es un carro");
+  });
+
+  test("Evidencia original conservada", function() {
+    expect(res.getBody().deteccion.id)
+      .to.equal(bru.getVar("deteccionDiscrepanciaId"));
+
+    expect(res.getBody().deteccion.tipoVisual).to.equal("MOTO");
+  });
+
+  test("Fecha de resolucion disponible", function() {
+    expect(res.getBody().resueltaEn).to.be.a("string");
+  });
+}

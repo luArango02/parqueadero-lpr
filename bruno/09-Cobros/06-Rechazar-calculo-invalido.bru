@@ -1,0 +1,30 @@
+meta {
+  name: Rechazar datos de calculo invalidos
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sedeId": "uuid-invalido",
+    "vehiculoId": "{{vehiculoId}}",
+    "fechaIngreso": "fecha-invalida"
+  }
+}
+
+tests {
+  test("HTTP 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Contrato de error de validacion", function() {
+    expect(res.getBody().statusCode).to.equal(400);
+    expect(res.getBody().message).to.be.an("array");
+  });
+}

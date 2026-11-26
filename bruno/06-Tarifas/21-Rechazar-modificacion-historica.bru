@@ -1,0 +1,36 @@
+meta {
+  name: Rechazar modificacion historica
+  type: http
+  seq: 21
+}
+
+patch {
+  url: {{baseUrl}}/api/tarifas/{{tarifaDiurnaInicialId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"valor":11000}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 409", function () {
+      expect(res.getStatus()).to.equal(409);
+  });
+
+  test("Conflicto por tarifa no vigente", function () {
+      expect(res.getBody().statusCode).to.equal(409);
+      expect(res.getBody().message).to.include("vigentes");
+  });
+}

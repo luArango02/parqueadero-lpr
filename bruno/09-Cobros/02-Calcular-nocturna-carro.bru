@@ -1,0 +1,49 @@
+meta {
+  name: Calcular tarifa nocturna para carro
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sedeId": "{{sedeId}}",
+    "vehiculoId": "{{vehiculoId}}",
+    "fechaIngreso": "2026-11-25T22:00:00-05:00"
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Tipo CARRO", function() {
+    expect(res.getBody().tipoVehiculo).to.equal("CARRO");
+  });
+
+  test("Franja nocturna", function() {
+    expect(res.getBody().franja).to.equal("NOCTURNA");
+  });
+
+  test("Tarifa nocturna del seed", function() {
+    expect(Number(res.getBody().valor)).to.equal(5000);
+  });
+
+  test("Nocturna menor que diurna", function() {
+    expect(Number(res.getBody().valor)).to.be.lessThan(8000);
+  });
+
+  test("Carro no exento", function() {
+    expect(res.getBody().exento).to.equal(false);
+  });
+
+  test("Dia operativo correcto", function() {
+    expect(res.getBody().diaOperativo).to.equal("2026-11-25");
+  });
+}

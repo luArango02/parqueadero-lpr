@@ -1,0 +1,45 @@
+meta {
+  name: Listar usuarios como administrador
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/usuarios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Listado de usuarios disponible", function() {
+    expect(res.getBody()).to.be.an("array");
+    expect(res.getBody().length).to.be.at.least(2);
+  });
+
+  test("Administrador y operador registrados", function() {
+    const usuarios = res.getBody();
+
+    expect(usuarios.some(
+      u => u.id === bru.getVar("adminId")
+    )).to.equal(true);
+
+    expect(usuarios.some(
+      u => u.id === bru.getVar("operadorId")
+    )).to.equal(true);
+  });
+
+  test("No se exponen credenciales", function() {
+    res.getBody().forEach(usuario => {
+      expect(usuario).not.to.have.property("password");
+      expect(usuario).not.to.have.property("passwordHash");
+    });
+  });
+}

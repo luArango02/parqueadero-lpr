@@ -1,0 +1,69 @@
+meta {
+  name: Listar espacios de la sede
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/espacios
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const espacios = res.getBody();
+
+    bru.setVar("totalEspaciosInicial", espacios.length);
+
+    const usados = espacios
+      .filter(e => e.zona === "Z")
+      .map(e => Number(e.codigo.split("-")[1]));
+
+    let numero = 1;
+
+    while (usados.includes(numero)) {
+      numero++;
+    }
+
+    if (numero > 99) {
+      throw new Error("No quedan codigos de prueba en zona Z");
+    }
+
+    bru.setVar("numeroEspacioPrueba", numero);
+    bru.setVar("codigoEspacioPrueba",
+      "Z-" + String(numero).padStart(2, "0"));
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Respuesta de tipo arreglo", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+
+  test("Espacios originales disponibles", function() {
+    expect(res.getBody().length).to.be.at.least(15);
+  });
+
+  test("Contratos de respuesta completos", function() {
+    expect(res.getBody().every(e =>
+      ["id", "codigo", "zona", "tipoCompatible",
+       "estado", "placa"].every(k => k in e)
+    )).to.equal(true);
+  });
+
+  test("Codigos sin duplicados", function() {
+    const codigos = res.getBody().map(e => e.codigo);
+    expect(new Set(codigos).size).to.equal(codigos.length);
+  });
+
+  test("Espacios libres sin placa asociada", function() {
+    expect(res.getBody()
+      .filter(e => e.estado === "DISPONIBLE")
+      .every(e => e.placa === null)).to.equal(true);
+  });
+}

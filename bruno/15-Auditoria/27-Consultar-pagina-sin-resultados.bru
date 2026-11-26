@@ -1,0 +1,36 @@
+meta {
+  name: Consultar pagina sin resultados
+  type: http
+  seq: 27
+}
+
+get {
+  url: {{baseUrl}}/api/auditoria?pagina=10000&limite=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Pagina valida sin registros disponibles", function () {
+    const body = res.getBody();
+
+    expect(body.pagina).to.equal(10000);
+    expect(body.limite).to.equal(100);
+    expect(body.datos).to.deep.equal([]);
+
+    expect(body.total).to.equal(
+      Number(bru.getVar("totalAuditoria"))
+    );
+
+    expect(body.totalPaginas)
+      .to.equal(Math.ceil(body.total / 100));
+  });
+}

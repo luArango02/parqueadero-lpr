@@ -1,0 +1,78 @@
+meta {
+  name: Crear usuario de pruebas
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/usuarios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+
+  const identificador =
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 8);
+
+  bru.setVar(
+    "usuarioPruebaEmail",
+    "parq41-" + identificador + "@parqueadero.local"
+  );
+
+  bru.setVar(
+    "usuarioPruebaPassword",
+    "Prueba41*" + identificador
+  );
+}
+
+body:json {
+  {
+    "nombre": "Operador Prueba PARQ-41",
+    "email": "{{usuarioPruebaEmail}}",
+    "password": "{{usuarioPruebaPassword}}",
+    "rol": "OPERADOR"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("usuarioPruebaId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Identificador disponible", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+
+  test("Correo registrado correctamente", function() {
+    expect(res.getBody().email)
+      .to.equal(bru.getVar("usuarioPruebaEmail"));
+  });
+
+  test("Rol operador", function() {
+    expect(res.getBody().rol).to.equal("OPERADOR");
+  });
+
+  test("Usuario creado activo", function() {
+    expect(res.getBody().activo).to.equal(true);
+  });
+
+  test("No se exponen credenciales", function() {
+    expect(res.getBody()).not.to.have.property("password");
+    expect(res.getBody()).not.to.have.property("passwordHash");
+  });
+}

@@ -1,0 +1,36 @@
+meta {
+  name: Consultar perfil autenticado
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/auth/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identidad del administrador correcta", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("adminId"));
+  });
+
+  test("Rol correcto", function() {
+    expect(res.getBody().rol)
+      .to.equal("ADMINISTRADOR");
+  });
+
+  test("No se expone passwordHash", function() {
+    expect(res.getBody())
+      .not.to.have.property("passwordHash");
+  });
+}

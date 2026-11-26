@@ -1,0 +1,33 @@
+meta {
+  name: Filtrar-por-tipo
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?tipo=PAGO
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Filtro aplicado correctamente", function () {
+    const body = res.getBody();
+    expect(body.datos).to.be.an("array");
+    expect(body.datos.length).to.be.greaterThan(0);
+
+  expect(body.total).to.be.greaterThan(0);
+
+  body.datos.forEach(function (e) {
+    expect(e.tipo).to.equal("PAGO");
+  });
+  });
+}

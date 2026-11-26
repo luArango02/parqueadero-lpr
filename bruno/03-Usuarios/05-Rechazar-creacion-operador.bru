@@ -1,0 +1,34 @@
+meta {
+  name: Denegar creacion de usuarios al operador
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/usuarios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "nombre": "Creacion no autorizada",
+    "email": "denegado-{{usuarioPruebaEmail}}",
+    "password": "{{usuarioPruebaPassword}}",
+    "rol": "OPERADOR"
+  }
+}
+
+tests {
+  test("HTTP 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Creacion no autorizada", function() {
+    expect(res.getBody().statusCode).to.equal(403);
+  });
+}

@@ -1,0 +1,101 @@
+[
+    {
+        "Bloque":  "01",
+        "SolicitudesEsperadas":  7,
+        "SolicitudesAprobadas":  7,
+        "PruebasEsperadas":  28,
+        "PruebasAprobadas":  28,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "02",
+        "SolicitudesEsperadas":  16,
+        "SolicitudesAprobadas":  16,
+        "PruebasEsperadas":  50,
+        "PruebasAprobadas":  50,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "03A",
+        "SolicitudesEsperadas":  17,
+        "SolicitudesAprobadas":  17,
+        "PruebasEsperadas":  83,
+        "PruebasAprobadas":  83,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "03B",
+        "SolicitudesEsperadas":  14,
+        "SolicitudesAprobadas":  14,
+        "PruebasEsperadas":  70,
+        "PruebasAprobadas":  70,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "04A",
+        "SolicitudesEsperadas":  16,
+        "SolicitudesAprobadas":  16,
+        "PruebasEsperadas":  63,
+        "PruebasAprobadas":  63,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "04B",
+        "SolicitudesEsperadas":  17,
+        "SolicitudesAprobadas":  17,
+        "PruebasEsperadas":  71,
+        "PruebasAprobadas":  71,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "05A",
+        "SolicitudesEsperadas":  28,
+        "SolicitudesAprobadas":  28,
+        "PruebasEsperadas":  99,
+        "PruebasAprobadas":  99,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "05B",
+        "SolicitudesEsperadas":  26,
+        "SolicitudesAprobadas":  26,
+        "PruebasEsperadas":  83,
+        "PruebasAprobadas":  83,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "06A",
+        "SolicitudesEsperadas":  26,
+        "SolicitudesAprobadas":  26,
+        "PruebasEsperadas":  67,
+        "PruebasAprobadas":  67,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "06B",
+        "SolicitudesEsperadas":  29,
+        "SolicitudesAprobadas":  29,
+        "PruebasEsperadas":  72,
+        "PruebasAprobadas":  72,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    },
+    {
+        "Bloque":  "07A",
+        "SolicitudesEsperadas":  25,
+        "SolicitudesAprobadas":  25,
+        "PruebasEsperadas":  104,
+        "PruebasAprobadas":  104,
+        "CodigoSalida":  0,
+        "Aprobado":  true
+    }
+]

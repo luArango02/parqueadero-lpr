@@ -1,0 +1,39 @@
+meta {
+  name: Rechazar-sede-inexistente
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas/versiones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"sedeId":"00000000-0000-4000-8000-000000000001","tipoVehiculo":"CARRO","valorDiurno":9000,"valorNocturno":6000}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 404", function () {
+      expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Respuesta de error documentada", function () {
+      const body = res.getBody();
+      expect(body.statusCode).to.equal(404);
+      expect(body).to.have.property("message");
+      expect(body).to.have.property("path");
+      expect(body).to.have.property("timestamp");
+  });
+}

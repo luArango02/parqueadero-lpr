@@ -1,16 +1,16 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
-  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ListarAuditoriaUseCase } from '../../../application/auditoria/listar-auditoria.use-case';
 import type { ResultadoAuditoria } from '../../../application/auditoria/auditoria.repositorio';
 import { Autenticado } from '../auth/autenticado.decorator';
 import { ListarAuditoriaQueryDto } from '../dto/listar-auditoria.query.dto';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
+import { AuditoriaRespuestaDto } from '../docs/respuestas/auditoria-respuesta.dto';
 
 @ApiTags('Auditoria')
 @Controller('auditoria')
@@ -20,21 +20,17 @@ export class AuditoriaController {
   @Get()
   @Autenticado('ADMINISTRADOR')
   @ApiOperation({
-    summary: 'Consultar registros de auditoria',
+    summary: 'Consultar registros de auditoría',
     description:
-      'Consulta paginada de operaciones auditadas, con filtros por usuario, accion, entidad y fecha. Solo administradores.',
+      'Consulta paginada de operaciones auditadas. Permite filtrar por usuario, acción, entidad, identificador de entidad e intervalo inclusivo de fechas. Solo disponible para administradores.',
   })
   @ApiOkResponse({
-    description: 'Registros de auditoria obtenidos correctamente.',
+    description: 'Registros de auditoría obtenidos correctamente',
+    type: AuditoriaRespuestaDto,
   })
   @ApiBadRequestResponse({
-    description: 'Filtros o paginacion invalidos.',
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Token ausente o invalido.',
-  })
-  @ApiForbiddenResponse({
-    description: 'El usuario no tiene permisos de administrador.',
+    description: 'Filtros, fechas o paginación inválidos',
+    type: ErrorHttpDto,
   })
   listar(@Query() query: ListarAuditoriaQueryDto): Promise<ResultadoAuditoria> {
     return this.listarAuditoria.ejecutar(query);

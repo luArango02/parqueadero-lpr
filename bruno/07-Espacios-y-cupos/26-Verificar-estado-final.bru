@@ -1,0 +1,46 @@
+meta {
+  name: Verificar estado final de los espacios
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/api/espacios
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Capacidad incrementada en uno", function() {
+    expect(res.getBody().length)
+      .to.equal(Number(bru.getVar("totalEspaciosInicial")) + 1);
+  });
+
+  test("Espacio de prueba rehabilitado", function() {
+    const espacio = res.getBody().find(
+      e => e.id === bru.getVar("espacioPruebaId")
+    );
+
+    expect(espacio.estado).to.equal("DISPONIBLE");
+    expect(espacio.placa).to.equal(null);
+  });
+
+  test("Espacio de motocicleta liberado", function() {
+    const espacio = res.getBody().find(
+      e => e.id === bru.getVar("espacioOcupadoId")
+    );
+
+    expect(espacio.estado).to.equal("DISPONIBLE");
+    expect(espacio.placa).to.equal(null);
+  });
+
+  test("Sin espacios ocupados", function() {
+    expect(res.getBody()
+      .filter(e => e.estado === "OCUPADO").length)
+      .to.equal(0);
+  });
+}

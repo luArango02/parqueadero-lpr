@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar modificacion por operador
+  type: http
+  seq: 17
+}
+
+patch {
+  url: {{baseUrl}}/api/espacios/{{espacioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+{"estado":"FUERA_DE_SERVICIO"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Contrato de error correcto", function() {
+    expect(res.getBody().statusCode).to.equal(403);
+  });
+}

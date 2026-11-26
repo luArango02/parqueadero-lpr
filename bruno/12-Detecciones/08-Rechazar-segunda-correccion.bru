@@ -1,0 +1,38 @@
+meta {
+  name: Rechazar correccion de lectura ya corregida
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/detecciones/{{deteccionPendienteId}}/validacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "placa": "QZX125",
+    "motivo": "Segundo intento de correccion"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("Lectura ya procesada", function() {
+    expect(res.getBody().statusCode).to.equal(409);
+  });
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Consultar historial operador
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Operador puede consultar historial", function () {
+    const body = res.getBody();
+
+    expect(body.datos).to.be.an("array");
+    expect(body.total).to.equal(
+      Number(bru.getVar("totalHistorial"))
+    );
+  });
+
+  test("Paginacion predeterminada correcta", function () {
+    const body = res.getBody();
+
+    expect(body.pagina).to.equal(1);
+    expect(body.limite).to.equal(20);
+    expect(body.totalPaginas)
+      .to.equal(Math.ceil(body.total / 20));
+  });
+}

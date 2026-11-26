@@ -1,0 +1,54 @@
+meta {
+  name: Restaurar valores originales mediante nueva version
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "sedeId": "{{sedeId}}",
+      "tipoVehiculo": "CARRO",
+      "valorDiurno": 8000,
+      "valorNocturno": 5000
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 201", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Valores originales restaurados", function () {
+      expect(res.getBody().diurna.valor).to.equal("8000.00");
+      expect(res.getBody().nocturna.valor).to.equal("5000.00");
+  });
+
+  test("Restauracion mediante nueva version", function () {
+      const body = res.getBody();
+      expect(body.diurna.version).to.equal(
+          Number(bru.getVar("versionTarifaModificada")) + 1
+      );
+      expect(body.nocturna.version).to.equal(body.diurna.version);
+  });
+
+  test("Ambas tarifas vigentes", function () {
+      expect(res.getBody().diurna.vigenteHasta).to.equal(null);
+      expect(res.getBody().nocturna.vigenteHasta).to.equal(null);
+  });
+}

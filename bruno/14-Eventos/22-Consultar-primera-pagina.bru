@@ -1,0 +1,42 @@
+meta {
+  name: Consultar primera pagina
+  type: http
+  seq: 22
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?pagina=1&limite=2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setVar(
+      "idsPrimeraPagina",
+      JSON.stringify(res.getBody().datos.map(function (e) {
+        return e.id;
+      }))
+    );
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Primera pagina consistente", function () {
+    const body = res.getBody();
+
+    expect(body.pagina).to.equal(1);
+    expect(body.limite).to.equal(2);
+    expect(body.datos.length).to.equal(2);
+    expect(body.totalPaginas)
+      .to.equal(Math.ceil(body.total / 2));
+  });
+}

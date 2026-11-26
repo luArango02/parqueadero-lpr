@@ -1,0 +1,27 @@
+meta {
+  name: Consultar vehiculo por placa
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/vehiculos/{{placaCarro}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identificador correcto", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("vehiculoId"));
+  });
+
+  test("Placa correcta", function() {
+    expect(res.getBody().placa)
+      .to.equal(bru.getVar("placaCarro"));
+  });
+}

@@ -16,6 +16,8 @@ import { RegistrarVehiculoUseCase } from '../../../application/vehiculos/registr
 import { VehiculoConsultado } from '../../../application/vehiculos/vehiculo.repositorio';
 import { ListarVehiculosQueryDto } from '../dto/listar-vehiculos.query.dto';
 import { RegistrarVehiculoDto } from '../dto/registrar-vehiculo.dto';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
+import { VehiculoRespuestaDto } from '../docs/respuestas/vehiculo-respuesta.dto';
 
 @ApiTags('Vehículos')
 @Controller('vehiculos')
@@ -27,15 +29,27 @@ export class VehiculosController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Registrar un vehículo' })
-  @ApiCreatedResponse({ description: 'Vehículo registrado' })
+  @ApiOperation({
+    summary: 'Registrar un vehículo',
+    description:
+      'Normaliza la placa y deduce el tipo de vehículo cuando no se proporciona. La placa debe ser única.',
+  })
+  @ApiCreatedResponse({
+    description: 'Vehículo registrado',
+    type: VehiculoRespuestaDto,
+  })
   @ApiBadRequestResponse({
     description: 'Placa inválida, tipo inválido o tipo no deducible',
+    type: ErrorHttpDto,
   })
   @ApiUnprocessableEntityResponse({
     description: 'El tipo contradice el formato de la placa',
+    type: ErrorHttpDto,
   })
-  @ApiConflictResponse({ description: 'La placa ya está registrada' })
+  @ApiConflictResponse({
+    description: 'La placa ya está registrada',
+    type: ErrorHttpDto,
+  })
   registrar(@Body() dto: RegistrarVehiculoDto): Promise<VehiculoConsultado> {
     return this.registrarVehiculo.ejecutar(dto);
   }
@@ -43,11 +57,18 @@ export class VehiculosController {
   @Get()
   @ApiOperation({
     summary: 'Listar vehículos con filtros por placa, tipo y estado',
+    description:
+      'Permite consultar vehículos dentro o fuera del parqueadero. El límite predeterminado es 50 y el máximo es 100.',
   })
   @ApiOkResponse({
-    description: 'Vehículos con su estado y su permanencia activa, si existe',
+    description: 'Vehículos con su estado y permanencia activa, si existe',
+    type: VehiculoRespuestaDto,
+    isArray: true,
   })
-  @ApiBadRequestResponse({ description: 'Filtro inválido' })
+  @ApiBadRequestResponse({
+    description: 'Filtro inválido',
+    type: ErrorHttpDto,
+  })
   listar(
     @Query() query: ListarVehiculosQueryDto,
   ): Promise<VehiculoConsultado[]> {
@@ -56,11 +77,19 @@ export class VehiculosController {
 
   @Get(':placa')
   @ApiOperation({ summary: 'Consultar un vehículo por placa' })
-  @ApiParam({ name: 'placa', example: 'ABC123' })
+  @ApiParam({
+    name: 'placa',
+    example: 'ABC123',
+    description: 'Placa del vehículo registrado',
+  })
   @ApiOkResponse({
     description: 'Vehículo con su permanencia activa cuando está dentro',
+    type: VehiculoRespuestaDto,
   })
-  @ApiNotFoundResponse({ description: 'No hay un vehículo con esa placa' })
+  @ApiNotFoundResponse({
+    description: 'No hay un vehículo con esa placa',
+    type: ErrorHttpDto,
+  })
   buscar(@Param('placa') placa: string): Promise<VehiculoConsultado> {
     return this.buscarVehiculo.ejecutar(placa);
   }

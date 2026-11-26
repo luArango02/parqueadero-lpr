@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar actualizacion sin cambios
+  type: http
+  seq: 19
+}
+
+patch {
+  url: {{baseUrl}}/api/espacios/{{espacioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+{}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Contrato de error correcto", function() {
+    expect(res.getBody().statusCode).to.equal(400);
+  });
+}

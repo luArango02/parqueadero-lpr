@@ -1,0 +1,30 @@
+meta {
+  name: Consultar tipo confirmado por operador
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/vehiculos/{{placaCarro}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Tipo confirmado correctamente", function() {
+    expect(res.getBody().tipo).to.equal("CARRO");
+  });
+
+  test("Placa original conservada", function() {
+    expect(res.getBody().placa)
+      .to.equal(bru.getVar("placaCarro"));
+  });
+
+  test("Vehiculo sin permanencia activa", function() {
+    expect(res.getBody().permanenciaActiva).to.equal(null);
+  });
+}

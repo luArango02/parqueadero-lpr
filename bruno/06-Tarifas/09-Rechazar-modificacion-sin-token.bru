@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar-modificacion-sin-token
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/tarifas/{{tarifaDiurnaInicialId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {"valor":10000}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 401", function () {
+      expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Respuesta de error documentada", function () {
+      const body = res.getBody();
+      expect(body.statusCode).to.equal(401);
+      expect(body).to.have.property("message");
+      expect(body).to.have.property("path");
+      expect(body).to.have.property("timestamp");
+  });
+}

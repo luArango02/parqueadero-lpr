@@ -1,0 +1,41 @@
+meta {
+  name: Calcular tarifa de motocicleta exenta
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sedeId": "{{sedeId}}",
+    "vehiculoId": "{{motoId}}",
+    "fechaIngreso": "2026-11-25T10:00:00-05:00"
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Tipo MOTO", function() {
+    expect(res.getBody().tipoVehiculo).to.equal("MOTO");
+  });
+
+  test("Franja diurna", function() {
+    expect(res.getBody().franja).to.equal("DIURNA");
+  });
+
+  test("Tarifa igual a cero", function() {
+    expect(Number(res.getBody().valor)).to.equal(0);
+  });
+
+  test("Motocicleta exenta", function() {
+    expect(res.getBody().exento).to.equal(true);
+  });
+}

@@ -6,6 +6,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
+import { HealthRespuestaDto } from '../docs/respuestas/health-respuesta.dto';
 
 export interface HealthResponse {
   status: 'ok';
@@ -21,13 +23,22 @@ export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Estado del backend y de la base de datos' })
-  @ApiOkResponse({ description: 'Backend y base de datos disponibles' })
+  @ApiOperation({
+    summary: 'Estado del backend y de la base de datos',
+    description:
+      'Comprueba la disponibilidad de la base de datos. Este endpoint no requiere autenticación y se encuentra fuera del prefijo /api.',
+  })
+  @ApiOkResponse({
+    description: 'Backend y base de datos disponibles',
+    type: HealthRespuestaDto,
+  })
   @ApiServiceUnavailableResponse({
     description: 'La base de datos no responde',
+    type: ErrorHttpDto,
   })
   async check(): Promise<HealthResponse> {
     const baseDisponible = await this.prisma.estaDisponible();
+
     if (!baseDisponible) {
       throw new ServiceUnavailableException('La base de datos no responde');
     }

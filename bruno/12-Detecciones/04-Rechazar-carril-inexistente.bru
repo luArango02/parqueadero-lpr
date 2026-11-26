@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar deteccion en carril inexistente
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/detecciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "QZX123",
+    "confianza": 0.98,
+    "carrilId": "00000000-0000-4000-8000-000000000041"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Carril no encontrado", function() {
+    expect(res.getBody().statusCode).to.equal(404);
+  });
+}

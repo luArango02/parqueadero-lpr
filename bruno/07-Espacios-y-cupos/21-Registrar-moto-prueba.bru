@@ -1,0 +1,49 @@
+meta {
+  name: Registrar motocicleta para prueba de ocupacion
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/api/vehiculos
+  body: json
+  auth: none
+}
+
+body:json {
+{"placa":"{{placaMotoEspacio}}","tipo":"MOTO"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+  const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let placa = "";
+
+  for (let i = 0; i < 3; i++) {
+    placa += letras[Math.floor(Math.random() * 26)];
+  }
+
+  placa += String(Math.floor(Math.random() * 100))
+    .padStart(2, "0");
+
+  placa += letras[Math.floor(Math.random() * 26)];
+
+  bru.setVar("placaMotoEspacio", placa);
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Motocicleta registrada", function() {
+    expect(res.getBody().tipo).to.equal("MOTO");
+  });
+
+  test("Placa correcta", function() {
+    expect(res.getBody().placa)
+      .to.equal(bru.getVar("placaMotoEspacio"));
+  });
+}

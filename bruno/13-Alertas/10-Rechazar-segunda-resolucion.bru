@@ -1,0 +1,38 @@
+meta {
+  name: Rechazar resolucion de alerta ya resuelta
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/alertas/{{alertaAntiPassbackId}}/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "estado": "RESUELTA",
+    "resolucion": "Segundo intento de resolucion"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("Alerta previamente resuelta", function() {
+    expect(res.getBody().statusCode).to.equal(409);
+  });
+}

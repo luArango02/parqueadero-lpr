@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar creacion por operador
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/espacios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+{"zona":"Z","numero":{{numeroEspacioPrueba}},"tipoCompatible":"CARRO"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Contrato de error correcto", function() {
+    expect(res.getBody().statusCode).to.equal(403);
+  });
+}

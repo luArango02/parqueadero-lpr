@@ -1,0 +1,39 @@
+meta {
+  name: Filtrar-fechas-inclusivas
+  type: http
+  seq: 22
+}
+
+get {
+  url: {{baseUrl}}/api/auditoria?desde={{auditoriaFecha}}&hasta={{auditoriaFecha}}&limite=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Filtro aplicado correctamente", function () {
+    const body = res.getBody();
+
+    expect(body.datos).to.be.an("array");
+    expect(body.datos.length).to.be.greaterThan(0);
+    expect(body.total).to.be.greaterThan(0);
+
+  const fecha = Date.parse(bru.getVar("auditoriaFecha"));
+
+  body.datos.forEach(function (e) {
+    expect(Date.parse(e.ocurridaEn)).to.equal(fecha);
+  });
+
+  expect(body.datos.some(function (e) {
+    return e.id === bru.getVar("auditoriaRegistroId");
+  })).to.equal(true);
+  });
+}

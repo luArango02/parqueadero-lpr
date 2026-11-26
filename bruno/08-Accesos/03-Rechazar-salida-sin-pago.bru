@@ -1,0 +1,49 @@
+meta {
+  name: Rechazar salida con cobro pendiente
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/salida
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaCarro}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilSalidaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Salida denegada", function() {
+    expect(res.getBody().autorizado).to.equal(false);
+  });
+
+  test("Barrera cerrada", function() {
+    expect(res.getBody().barrera).to.equal("CERRADA");
+  });
+
+  test("Cobro pendiente identificado", function() {
+    expect(res.getBody().cobrosPendientes.some(
+      c => c.id === bru.getVar("cobroId")
+    )).to.equal(true);
+  });
+
+  test("No se libera el espacio", function() {
+    expect(res.getBody().espacioLiberado).to.equal(null);
+  });
+}

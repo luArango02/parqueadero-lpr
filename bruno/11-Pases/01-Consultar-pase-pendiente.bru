@@ -1,0 +1,34 @@
+meta {
+  name: Consultar pase antes de pagar
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/pases/{{placaCarro}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Pase no vigente", function() {
+    expect(res.getBody().vigente).to.equal(false);
+  });
+
+  test("Cobro pendiente", function() {
+    expect(res.getBody().estadoCobro).to.equal("PENDIENTE");
+  });
+
+  test("Identificador del cobro correcto", function() {
+    expect(res.getBody().cobroId)
+      .to.equal(bru.getVar("cobroId"));
+  });
+}

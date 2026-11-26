@@ -1,0 +1,30 @@
+meta {
+  name: Rechazar-fecha-invalida
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/auditoria?desde=fecha-invalida
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 400", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Respuesta de error documentada", function () {
+    const body = res.getBody();
+
+    expect(body.statusCode).to.equal(400);
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("path");
+    expect(body).to.have.property("timestamp");
+  });
+}

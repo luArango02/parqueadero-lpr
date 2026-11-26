@@ -1,0 +1,42 @@
+meta {
+  name: Consultar segunda pagina
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?pagina=2&limite=2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Segunda pagina consistente", function () {
+    const body = res.getBody();
+
+    expect(body.pagina).to.equal(2);
+    expect(body.limite).to.equal(2);
+    expect(body.datos.length).to.equal(2);
+    expect(body.total).to.equal(
+      Number(bru.getVar("totalHistorial"))
+    );
+  });
+
+  test("No repite eventos de la primera pagina", function () {
+    const anteriores = JSON.parse(
+      bru.getVar("idsPrimeraPagina")
+    );
+
+    res.getBody().datos.forEach(function (e) {
+      expect(anteriores).not.to.include(e.id);
+    });
+  });
+}

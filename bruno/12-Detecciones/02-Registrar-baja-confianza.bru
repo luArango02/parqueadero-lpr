@@ -1,0 +1,60 @@
+meta {
+  name: Registrar deteccion pendiente de revision
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/detecciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "QZX123",
+    "confianza": 0.35,
+    "tipoVisual": "CARRO",
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("deteccionPendienteId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Lectura pendiente de revision", function() {
+    expect(res.getBody().estado)
+      .to.equal("PENDIENTE_REVISION");
+  });
+
+  test("Placa original conservada", function() {
+    expect(res.getBody().placaLeida).to.equal("QZX123");
+  });
+
+  test("Confianza inferior al umbral", function() {
+    expect(res.getBody().confianza)
+      .to.be.lessThan(res.getBody().umbralAplicado);
+  });
+
+  test("Origen SIMULADOR", function() {
+    expect(res.getBody().origen).to.equal("SIMULADOR");
+  });
+
+  test("Identificador disponible", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+}

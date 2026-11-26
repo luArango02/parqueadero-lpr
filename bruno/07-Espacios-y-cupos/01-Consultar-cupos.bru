@@ -1,0 +1,48 @@
+meta {
+  name: Consultar cupos por tipo de vehiculo
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/cupos
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Cupos de carro y moto disponibles", function() {
+    const cupos = res.getBody();
+
+    expect(cupos).to.be.an("array");
+
+    const tipos = cupos.map(cupo => cupo.tipo);
+
+    expect(tipos).to.include("CARRO");
+    expect(tipos).to.include("MOTO");
+  });
+
+  test("Cantidades de espacios consistentes", function() {
+    res.getBody().forEach(cupo => {
+      expect(cupo.total).to.equal(
+        cupo.disponibles +
+        cupo.ocupados +
+        cupo.fueraDeServicio
+      );
+
+      expect(cupo.disponibles).to.be.at.least(0);
+      expect(cupo.ocupados).to.be.at.least(0);
+    });
+  });
+
+  test("Indicador de lleno consistente", function() {
+    res.getBody().forEach(cupo => {
+      expect(cupo.lleno)
+        .to.equal(cupo.disponibles === 0);
+    });
+  });
+}

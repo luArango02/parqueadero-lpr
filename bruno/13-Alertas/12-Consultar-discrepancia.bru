@@ -1,0 +1,53 @@
+meta {
+  name: Consultar discrepancia y evidencia de deteccion
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/alertas?tipo=DISCREPANCIA_TIPO&estado=ABIERTA&placa={{placaCarro}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Alerta correspondiente disponible", function() {
+    expect(res.getBody().some(
+      a => a.id === bru.getVar("alertaDiscrepanciaId")
+    )).to.equal(true);
+  });
+
+  test("Tipo y estado correctos", function() {
+    const alerta = res.getBody().find(
+      a => a.id === bru.getVar("alertaDiscrepanciaId")
+    );
+
+    expect(alerta.tipo).to.equal("DISCREPANCIA_TIPO");
+    expect(alerta.estado).to.equal("ABIERTA");
+  });
+
+  test("Evidencia vinculada a la deteccion", function() {
+    const alerta = res.getBody().find(
+      a => a.id === bru.getVar("alertaDiscrepanciaId")
+    );
+
+    expect(alerta.deteccion.id)
+      .to.equal(bru.getVar("deteccionDiscrepanciaId"));
+  });
+
+  test("Clasificacion visual conservada", function() {
+    const alerta = res.getBody().find(
+      a => a.id === bru.getVar("alertaDiscrepanciaId")
+    );
+
+    expect(alerta.deteccion.tipoVisual).to.equal("MOTO");
+  });
+}

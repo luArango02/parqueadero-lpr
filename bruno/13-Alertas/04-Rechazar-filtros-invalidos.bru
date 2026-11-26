@@ -1,0 +1,26 @@
+meta {
+  name: Rechazar filtros invalidos de alertas
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/alertas?estado=INVALIDO&limite=101
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+tests {
+  test("HTTP 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Error de validacion de filtros", function() {
+    expect(res.getBody().statusCode).to.equal(400);
+    expect(res.getBody().message).to.be.an("array");
+  });
+}

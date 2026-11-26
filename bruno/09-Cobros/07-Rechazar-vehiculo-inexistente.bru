@@ -1,0 +1,29 @@
+meta {
+  name: Rechazar calculo de vehiculo inexistente
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sedeId": "{{sedeId}}",
+    "vehiculoId": "00000000-0000-4000-8000-000000000041",
+    "fechaIngreso": "2026-11-25T10:00:00-05:00"
+  }
+}
+
+tests {
+  test("HTTP 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Recurso no encontrado", function() {
+    expect(res.getBody().statusCode).to.equal(404);
+  });
+}

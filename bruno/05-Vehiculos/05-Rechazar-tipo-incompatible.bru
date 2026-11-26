@@ -1,0 +1,34 @@
+meta {
+  name: Rechazar tipo incompatible con placa
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/vehiculos
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "ZZZ987",
+    "tipo": "MOTO"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 422", function() {
+    expect(res.getStatus()).to.equal(422);
+  });
+
+  test("Clasificacion incompatible rechazada", function() {
+    expect(res.getBody().statusCode).to.equal(422);
+  });
+}

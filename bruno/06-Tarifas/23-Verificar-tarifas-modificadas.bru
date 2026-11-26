@@ -1,0 +1,37 @@
+meta {
+  name: Verificar tarifas modificadas
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/vigentes?sedeId={{sedeId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Solo cuatro tarifas vigentes", function () {
+      expect(res.getBody()).to.have.lengthOf(4);
+  });
+
+  test("Nuevos valores vigentes de carro", function () {
+      const tarifas = res.getBody();
+      expect(tarifas.find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "DIURNA"
+      ).valor).to.equal("10000.00");
+
+      expect(tarifas.find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "NOCTURNA"
+      ).valor).to.equal("6000.00");
+  });
+
+  test("Exencion de motocicletas conservada", function () {
+      res.getBody().filter(t => t.tipoVehiculo === "MOTO")
+          .forEach(t => expect(t.valor).to.equal("0.00"));
+  });
+}

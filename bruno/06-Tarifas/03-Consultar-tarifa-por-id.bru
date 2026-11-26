@@ -1,0 +1,27 @@
+meta {
+  name: Consultar tarifa por identificador
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/{{tarifaId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identificador de tarifa correcto", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("tarifaId"));
+  });
+
+  test("Sede correcta", function() {
+    expect(res.getBody().sedeId)
+      .to.equal(bru.getVar("sedeId"));
+  });
+}

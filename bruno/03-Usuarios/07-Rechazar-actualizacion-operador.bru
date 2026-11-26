@@ -1,0 +1,31 @@
+meta {
+  name: Denegar actualizacion de usuarios al operador
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/usuarios/{{usuarioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "rol": "ADMINISTRADOR"
+  }
+}
+
+tests {
+  test("HTTP 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Escalamiento de privilegios denegado", function() {
+    expect(res.getBody().statusCode).to.equal(403);
+  });
+}

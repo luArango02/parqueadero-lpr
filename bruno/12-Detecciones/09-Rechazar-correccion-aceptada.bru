@@ -1,0 +1,38 @@
+meta {
+  name: Rechazar correccion de lectura aceptada
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/detecciones/{{deteccionAceptadaId}}/validacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "placa": "ABC124",
+    "motivo": "Intento de modificar lectura aceptada"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("Solo se permiten lecturas pendientes", function() {
+    expect(res.getBody().statusCode).to.equal(409);
+  });
+}

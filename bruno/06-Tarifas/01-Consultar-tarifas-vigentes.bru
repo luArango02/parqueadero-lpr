@@ -1,0 +1,90 @@
+meta {
+  name: Consultar tarifas vigentes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/vigentes?sedeId={{sedeId}}
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const tarifas = res.getBody();
+
+    const tarifa = tarifas.find(
+      item =>
+        item.tipoVehiculo === "CARRO" &&
+        item.franja === "DIURNA"
+    );
+
+    if (tarifa) {
+      bru.setVar("tarifaId", tarifa.id);
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Respuesta de tipo arreglo", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+
+  test("Tarifas de carro y moto disponibles", function() {
+    const tarifas = res.getBody();
+
+    for (const tipo of ["CARRO", "MOTO"]) {
+      for (const franja of ["DIURNA", "NOCTURNA"]) {
+        expect(
+          tarifas.some(
+            item =>
+              item.tipoVehiculo === tipo &&
+              item.franja === franja
+          )
+        ).to.equal(true);
+      }
+    }
+  });
+
+  test("Tarifa nocturna de carro inferior a diurna", function() {
+    const tarifas = res.getBody();
+
+    const diurna = tarifas.find(
+      item =>
+        item.tipoVehiculo === "CARRO" &&
+        item.franja === "DIURNA"
+    );
+
+    const nocturna = tarifas.find(
+      item =>
+        item.tipoVehiculo === "CARRO" &&
+        item.franja === "NOCTURNA"
+    );
+
+    expect(Number(nocturna.valor))
+      .to.be.below(Number(diurna.valor));
+  });
+
+  test("Motocicletas exentas de cobro", function() {
+    const motos = res.getBody().filter(
+      item => item.tipoVehiculo === "MOTO"
+    );
+
+    expect(motos.length).to.be.greaterThan(0);
+
+    motos.forEach(item => {
+      expect(Number(item.valor)).to.equal(0);
+    });
+  });
+}
+
+docs {
+  Consulta las tarifas vigentes de la sede.
+  Requiere ejecutar previamente la consulta de sede actual.
+  Verifica las reglas de tarifas y exencion de motocicletas.
+}

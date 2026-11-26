@@ -1,0 +1,34 @@
+meta {
+  name: Impedir validacion manual sin autenticacion
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/detecciones/{{deteccionPendienteId}}/validacion
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "QZX124",
+    "motivo": "Correccion manual de prueba PARQ-41"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Autenticacion requerida", function() {
+    expect(res.getBody().statusCode).to.equal(401);
+  });
+}

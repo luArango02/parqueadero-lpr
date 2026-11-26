@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
-export function configurarSwagger(app: INestApplication): void {
+export function crearDocumentoOpenApi(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('Parqueadero LPR - API')
     .setDescription(
@@ -11,5 +11,9 @@ export function configurarSwagger(app: INestApplication): void {
     .addBearerAuth()
     .build();
 
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+  return SwaggerModule.createDocument(app, config);
+}
+
+export function configurarSwagger(app: INestApplication): void {
+  SwaggerModule.setup('docs', app, crearDocumentoOpenApi(app));
 }

@@ -1,0 +1,77 @@
+meta {
+  name: Crear nueva version de tarifas
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas/versiones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "sedeId": "{{sedeId}}",
+      "tipoVehiculo": "CARRO",
+      "valorDiurno": 9000,
+      "valorNocturno": 6000
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+      const body = res.getBody();
+      bru.setVar("tarifaDiurnaNuevaId", body.diurna.id);
+      bru.setVar("tarifaNocturnaNuevaId", body.nocturna.id);
+      bru.setVar("versionTarifaNueva", body.diurna.version);
+      bru.setVar("fechaNuevaVersion", body.diurna.vigenteDesde);
+  }
+}
+
+tests {
+  test("HTTP 201", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Nuevos valores correctos", function () {
+      const body = res.getBody();
+      expect(body.diurna.valor).to.equal("9000.00");
+      expect(body.nocturna.valor).to.equal("6000.00");
+  });
+
+  test("Version incrementada", function () {
+      const body = res.getBody();
+      expect(body.diurna.version).to.equal(
+          Number(bru.getVar("versionTarifaInicial")) + 1
+      );
+      expect(body.nocturna.version).to.equal(body.diurna.version);
+  });
+
+  test("Identificadores nuevos", function () {
+      const body = res.getBody();
+      expect(body.diurna.id).not.to.equal(
+          bru.getVar("tarifaDiurnaInicialId")
+      );
+      expect(body.nocturna.id).not.to.equal(
+          bru.getVar("tarifaNocturnaInicialId")
+      );
+  });
+
+  test("Vigencias sincronizadas", function () {
+      const body = res.getBody();
+      expect(body.diurna.vigenteDesde).to.equal(body.nocturna.vigenteDesde);
+      expect(body.diurna.vigenteHasta).to.equal(null);
+      expect(body.nocturna.vigenteHasta).to.equal(null);
+  });
+}

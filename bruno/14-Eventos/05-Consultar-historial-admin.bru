@@ -1,0 +1,94 @@
+meta {
+  name: Consultar historial administrador
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?pagina=1&limite=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+
+    const pago = body.datos.find(function (evento) {
+      return evento.tipo === "PAGO" &&
+        evento.estado === "PAGADO" &&
+        evento.placa;
+    });
+
+    if (pago) {
+      bru.setVar("placaHistorial", pago.placa);
+      bru.setVar("fechaEventoPago", pago.ocurridoEn);
+    }
+
+    bru.setVar("totalHistorial", String(body.total));
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Contrato de paginacion", function () {
+    const body = res.getBody();
+
+    expect(body.datos).to.be.an("array");
+    expect(body.total).to.be.a("number");
+    expect(body.pagina).to.equal(1);
+    expect(body.limite).to.equal(100);
+    expect(body.totalPaginas)
+      .to.equal(Math.ceil(body.total / body.limite));
+    expect(body.datos.length)
+      .to.equal(Math.min(body.total, 100));
+  });
+
+  test("Historial contiene accesos pagos y alertas", function () {
+    const tipos = res.getBody().datos.map(function (e) {
+      return e.tipo;
+    });
+
+    expect(tipos).to.include("INGRESO");
+    expect(tipos).to.include("SALIDA");
+    expect(tipos).to.include("PAGO");
+    expect(tipos).to.include("ALERTA");
+  });
+
+  test("Estados de eventos validos", function () {
+    const estados = [
+      "AUTORIZADO", "DENEGADO", "PENDIENTE",
+      "PAGADO", "ANULADO", "VENCIDO",
+      "ABIERTA", "RESUELTA"
+    ];
+
+    res.getBody().datos.forEach(function (e) {
+      expect(estados).to.include(e.estado);
+      expect(e.id).to.be.a("string");
+      expect(e.detalle).to.be.a("string");
+      expect(Number.isFinite(Date.parse(e.ocurridoEn)))
+        .to.equal(true);
+    });
+  });
+
+  test("Orden cronologico descendente", function () {
+    const datos = res.getBody();
+
+    for (let i = 1; i < datos.length; i++) {
+      expect(Date.parse(datos[i - 1].ocurridoEn))
+        .to.be.at.least(Date.parse(datos[i].ocurridoEn));
+    }
+  });
+
+  test("Existe un pago para pruebas de filtros", function () {
+    expect(bru.getVar("placaHistorial")).to.be.a("string");
+    expect(bru.getVar("fechaEventoPago")).to.be.a("string");
+  });
+}
