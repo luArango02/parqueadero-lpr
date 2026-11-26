@@ -246,4 +246,17 @@ describe('RegistrarSalidaUseCase', () => {
 
     expect(repositorio.verificacionesCobros).toHaveLength(0);
   });
+
+  it('el operador confirma una lectura de baja confianza y el vehículo sale (RN-14)', async () => {
+    repositorio.estacionar('XYZ45A', 'MOTO', 'M-01');
+
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'XYZ45A',
+      confianza: 0.4,
+      lecturaManual: true,
+    });
+
+    expect(resultado.autorizado).toBe(true);
+    expect(repositorio.salidas[0].lecturaManual).toBe(true);
+  });
 });

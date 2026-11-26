@@ -16,6 +16,7 @@ export interface DatosSalida {
   placa: string;
   permanencia: PermanenciaActiva;
   ocurridoEn: Date;
+  lecturaManual: boolean;
 }
 
 export interface DatosSalidaDenegada {

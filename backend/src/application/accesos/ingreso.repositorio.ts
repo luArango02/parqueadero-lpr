@@ -32,6 +32,7 @@ export interface DatosIngreso {
     franja: Franja;
     diaOperativo: string;
   } | null;
+  lecturaManual: boolean;
 }
 
 export interface IngresoRegistrado {

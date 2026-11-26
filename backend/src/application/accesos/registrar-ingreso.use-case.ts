@@ -19,6 +19,10 @@ export interface SolicitudIngreso {
   placa: string;
   confianza?: number;
   carrilId?: string;
+  /** El operador confirmó o corrigió la placa en pantalla (RN-14). */
+  lecturaManual?: boolean;
+  /** Solo para lectura manual de una placa con formato no reconocido. */
+  tipoVehiculo?: TipoVehiculo;
 }
 
 export interface ResultadoIngreso {
@@ -86,12 +90,17 @@ export class RegistrarIngresoUseCase {
     };
 
     // RN-14: con baja confianza o formato desconocido decide el operador.
-    if ((solicitud.confianza ?? 1) < sede.umbralConfianza) {
+    // Una lectura manual ya la validó el operador: no se mide la confianza.
+    if (
+      !solicitud.lecturaManual &&
+      (solicitud.confianza ?? 1) < sede.umbralConfianza
+    ) {
       return denegar('BAJA CONFIANZA: REQUIERE VALIDACIÓN MANUAL', null);
     }
     const tipo =
       (await this.repositorio.tipoRegistrado(placa)) ??
-      clasificarPorFormato(placa);
+      clasificarPorFormato(placa) ??
+      (solicitud.lecturaManual ? (solicitud.tipoVehiculo ?? null) : null);
     if (!tipo) {
       return denegar('PLACA NO RECONOCIDA: REQUIERE VALIDACIÓN MANUAL', null);
     }
@@ -144,6 +153,7 @@ export class RegistrarIngresoUseCase {
       tipo,
       ocurridoEn: ahora,
       cobroNuevo,
+      lecturaManual: solicitud.lecturaManual ?? false,
     });
     if (!registrado) {
       return denegar(`LLENO: SIN ESPACIO PARA ${tipo}`, tipo);
