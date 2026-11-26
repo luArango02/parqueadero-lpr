@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { usuarioActual } from '../admin/sesion'
+import CorreccionManual from '../components/CorreccionManual.vue'
 import FormularioLectura from '../components/FormularioLectura.vue'
 import IndicadorBarrera from '../components/IndicadorBarrera.vue'
-import { registrarSalida, type ResultadoSalida } from '../services/api'
+import ResumenCupos from '../components/ResumenCupos.vue'
+import { referenciaPagoEfectivo, requiereValidacionManual, totalPendiente } from '../carril/lectura'
+import {
+  registrarPagoEfectivo,
+  registrarSalida,
+  registrarSalidaManual,
+  type ResultadoSalida,
+} from '../services/api'
 import { CARRIL_SIN_LECTURAS, aplicarBarrera, type EstadoCarril } from '../tiempoReal/barrera'
 import { useTiempoReal } from '../tiempoReal/useTiempoReal'
 
+const route = useRoute()
 const enviando = ref(false)
 const error = ref('')
 const resultado = ref<ResultadoSalida | null>(null)
@@ -17,27 +28,50 @@ const detalleBarrera = computed(() =>
 
 const { alEvento } = useTiempoReal()
 alEvento('barrera:actualizada', (evento) => {
-    barrera.value = aplicarBarrera(barrera.value, evento, 'SALIDA')
+  barrera.value = aplicarBarrera(barrera.value, evento, 'SALIDA')
 })
 
-async function registrar(placa: string, confianza: number) {
+function mostrar(respuesta: ResultadoSalida) {
+  resultado.value = respuesta
+  barrera.value = {
+    estado: respuesta.barrera,
+    placa: respuesta.placa,
+    motivo: respuesta.motivo,
+    ocurridoEn: new Date().toISOString(),
+  }
+  historial.value.unshift({ ...respuesta, hora: new Date().toLocaleTimeString('es-CO') })
+}
+
+async function enviar(peticion: () => Promise<ResultadoSalida>, mensajeError: string) {
   enviando.value = true
   error.value = ''
   try {
-    const respuesta = await registrarSalida(placa, confianza)
-    resultado.value = respuesta
-    barrera.value = {
-      estado: respuesta.barrera,
-      placa: respuesta.placa,
-      motivo: respuesta.motivo,
-      ocurridoEn: new Date().toISOString(),
-    }
-    historial.value.unshift({ ...respuesta, hora: new Date().toLocaleTimeString('es-CO') })
+    mostrar(await peticion())
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se pudo registrar la salida'
+    error.value = e instanceof Error ? e.message : mensajeError
   } finally {
     enviando.value = false
   }
+}
+
+function registrar(placa: string, confianza: number) {
+  return enviar(() => registrarSalida(placa, confianza), 'No se pudo registrar la salida')
+}
+
+function confirmarManual(placa: string) {
+  return enviar(() => registrarSalidaManual(placa), 'No se pudo registrar la salida')
+}
+
+// El operador recibe el efectivo, se paga cada cobro pendiente y se vuelve a pedir la salida.
+function pagarYSalir() {
+  const actual = resultado.value
+  if (!actual) return
+  return enviar(async () => {
+    for (const cobro of actual.cobrosPendientes) {
+      await registrarPagoEfectivo(cobro.id, referenciaPagoEfectivo(cobro.id))
+    }
+    return registrarSalida(actual.placa, 1)
+  }, 'No se pudo registrar el pago')
 }
 
 function tiempoDentro(minutos: number | null): string {
@@ -48,6 +82,7 @@ function tiempoDentro(minutos: number | null): string {
 
 <template>
   <h1>Carril de salida</h1>
+  <ResumenCupos />
 
   <IndicadorBarrera :estado="barrera.estado" :detalle="detalleBarrera" />
 
@@ -67,7 +102,24 @@ function tiempoDentro(minutos: number | null): string {
           {{ cobro.diaOperativo }}: ${{ cobro.valor.toLocaleString('es-CO') }} ({{ cobro.franja }})
         </li>
       </ul>
+      <button v-if="usuarioActual" :disabled="enviando" @click="pagarYSalir">
+        Registrar pago en efectivo (${{ totalPendiente(resultado.cobrosPendientes).toLocaleString('es-CO') }}) y abrir
+      </button>
+      <p v-else>
+        Para registrar el pago,
+        <RouterLink :to="{ path: '/login', query: { volver: route.fullPath } }">
+          inicie sesión como operador</RouterLink
+        >.
+      </p>
     </div>
+    <CorreccionManual
+      v-if="requiereValidacionManual(resultado.motivo)"
+      :key="historial.length"
+      :placa="resultado.placa"
+      :pedir-tipo="false"
+      :enviando="enviando"
+      @confirmar="confirmarManual"
+    />
   </div>
 
   <h2 v-if="historial.length">Historial</h2>

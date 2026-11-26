@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import CorreccionManual from '../components/CorreccionManual.vue'
 import FormularioLectura from '../components/FormularioLectura.vue'
 import IndicadorBarrera from '../components/IndicadorBarrera.vue'
-import { registrarIngreso, type ResultadoIngreso } from '../services/api'
+import ResumenCupos from '../components/ResumenCupos.vue'
+import { pideTipoVehiculo, requiereValidacionManual } from '../carril/lectura'
+import { registrarIngreso, registrarIngresoManual, type ResultadoIngreso } from '../services/api'
 import { CARRIL_SIN_LECTURAS, aplicarBarrera, type EstadoCarril } from '../tiempoReal/barrera'
 import { useTiempoReal } from '../tiempoReal/useTiempoReal'
 
@@ -20,31 +23,43 @@ alEvento('barrera:actualizada', (evento) => {
   barrera.value = aplicarBarrera(barrera.value, evento, 'ENTRADA')
 })
 
-async function registrar(placa: string, confianza: number) {
+function mostrar(respuesta: ResultadoIngreso) {
+  resultado.value = respuesta
+  barrera.value = {
+    estado: respuesta.barrera,
+    placa: respuesta.placa,
+    motivo: respuesta.motivo,
+    ocurridoEn: new Date().toISOString(),
+  }
+  historial.value.unshift({ ...respuesta, hora: new Date().toLocaleTimeString('es-CO') })
+}
+
+async function enviar(peticion: () => Promise<ResultadoIngreso>) {
   enviando.value = true
   error.value = ''
   try {
-    const respuesta = await registrarIngreso(placa, confianza)
-    resultado.value = respuesta
-    barrera.value = {
-      estado: respuesta.barrera,
-      placa: respuesta.placa,
-      motivo: respuesta.motivo,
-      ocurridoEn: new Date().toISOString(),
-    }
-    historial.value.unshift({ ...respuesta, hora: new Date().toLocaleTimeString('es-CO') })
+    mostrar(await peticion())
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'No se pudo registrar el ingreso'
   } finally {
     enviando.value = false
   }
 }
+
+function registrar(placa: string, confianza: number) {
+  return enviar(() => registrarIngreso(placa, confianza))
+}
+
+function confirmarManual(placa: string, tipo?: 'CARRO' | 'MOTO') {
+  return enviar(() => registrarIngresoManual(placa, tipo))
+}
 </script>
 
 <template>
   <h1>Carril de entrada</h1>
+  <ResumenCupos />
 
-    <IndicadorBarrera :estado="barrera.estado" :detalle="detalleBarrera" />
+  <IndicadorBarrera :estado="barrera.estado" :detalle="detalleBarrera" />
 
   <FormularioLectura texto-boton="Registrar ingreso" :enviando="enviando" @leer="registrar" />
   <p v-if="error" class="error">{{ error }}</p>
@@ -62,6 +77,14 @@ async function registrar(placa: string, confianza: number) {
           : 'Sin cobro'
       }}
     </p>
+    <CorreccionManual
+      v-if="requiereValidacionManual(resultado.motivo)"
+      :key="historial.length"
+      :placa="resultado.placa"
+      :pedir-tipo="pideTipoVehiculo(resultado.motivo)"
+      :enviando="enviando"
+      @confirmar="confirmarManual"
+    />
   </div>
 
   <h2 v-if="historial.length">Historial</h2>
