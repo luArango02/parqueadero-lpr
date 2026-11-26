@@ -1,0 +1,67 @@
+meta {
+  name: Registrar motocicleta de pruebas
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/vehiculos
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaMoto}}",
+    "tipo": "MOTO"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+  const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let prefijo = "";
+
+  for (let i = 0; i < 3; i++) {
+    prefijo += letras[Math.floor(Math.random() * 26)];
+  }
+
+  const numero = String(
+    Math.floor(Math.random() * 100)
+  ).padStart(2, "0");
+
+  const sufijo = letras[Math.floor(Math.random() * 26)];
+
+  bru.setVar("placaMoto", prefijo + numero + sufijo);
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("motoId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Placa registrada correctamente", function() {
+    expect(res.getBody().placa)
+      .to.equal(bru.getVar("placaMoto"));
+  });
+
+  test("Tipo MOTO", function() {
+    expect(res.getBody().tipo).to.equal("MOTO");
+  });
+
+  test("Identificador disponible", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+
+  test("Sin permanencia activa inicial", function() {
+    expect(res.getBody().permanenciaActiva).to.equal(null);
+  });
+}

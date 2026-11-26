@@ -1,0 +1,21 @@
+meta {
+  name: Rechazar estado de espacio invalido
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/espacios?estado=INVALIDO
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Error de validacion documentado", function() {
+    expect(res.getBody().statusCode).to.equal(400);
+  });
+}

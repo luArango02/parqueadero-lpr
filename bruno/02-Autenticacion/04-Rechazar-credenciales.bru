@@ -1,0 +1,38 @@
+meta {
+  name: Rechazar credenciales incorrectas
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{adminEmail}}",
+    "password": "CredencialIncorrectaPARQ41"
+  }
+}
+
+tests {
+  test("HTTP 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Contrato de error correcto", function() {
+    const error = res.getBody();
+
+    expect(error.statusCode).to.equal(401);
+    expect(error.message).to.be.a("string");
+    expect(error.path).to.be.a("string");
+    expect(error.timestamp).to.be.a("string");
+  });
+
+  test("No se entrega token", function() {
+    expect(res.getBody())
+      .not.to.have.property("accessToken");
+  });
+}

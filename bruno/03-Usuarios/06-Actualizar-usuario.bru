@@ -1,0 +1,41 @@
+meta {
+  name: Actualizar usuario de pruebas
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/usuarios/{{usuarioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "nombre": "Operador PARQ-41 Actualizado"
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identificador conservado", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("usuarioPruebaId"));
+  });
+
+  test("Nombre actualizado", function() {
+    expect(res.getBody().nombre)
+      .to.equal("Operador PARQ-41 Actualizado");
+  });
+
+  test("Rol conservado", function() {
+    expect(res.getBody().rol).to.equal("OPERADOR");
+  });
+}

@@ -1,0 +1,47 @@
+meta {
+  name: Impedir ingreso con discrepancia abierta
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/ingreso
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaCarro}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Ingreso no autorizado", function() {
+    expect(res.getBody().autorizado).to.equal(false);
+  });
+
+  test("Barrera cerrada", function() {
+    expect(res.getBody().barrera).to.equal("CERRADA");
+  });
+
+  test("No se asigna espacio", function() {
+    expect(res.getBody().espacio).to.equal(null);
+  });
+
+  test("No se genera cobro", function() {
+    expect(res.getBody().cobro).to.equal(null);
+  });
+}

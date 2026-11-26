@@ -1,0 +1,31 @@
+meta {
+  name: Consultar historial sin coincidencias
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial?tipo=INGRESO&estado=PAGADO
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Resultado vacio correctamente paginado", function () {
+    const body = res.getBody();
+
+    expect(body.datos).to.deep.equal([]);
+    expect(body.total).to.equal(0);
+    expect(body.totalPaginas).to.equal(0);
+    expect(body.pagina).to.equal(1);
+    expect(body.limite).to.equal(20);
+  });
+}

@@ -1,0 +1,50 @@
+meta {
+  name: Calcular tarifa diurna para carro
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/cobros/calcular
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sedeId": "{{sedeId}}",
+    "vehiculoId": "{{vehiculoId}}",
+    "fechaIngreso": "2026-11-25T10:00:00-05:00"
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Tipo CARRO", function() {
+    expect(res.getBody().tipoVehiculo).to.equal("CARRO");
+  });
+
+  test("Franja diurna", function() {
+    expect(res.getBody().franja).to.equal("DIURNA");
+  });
+
+  test("Tarifa diurna del seed", function() {
+    expect(Number(res.getBody().valor)).to.equal(8000);
+  });
+
+  test("Carro no exento", function() {
+    expect(res.getBody().exento).to.equal(false);
+  });
+
+  test("Dia operativo correcto", function() {
+    expect(res.getBody().diaOperativo).to.equal("2026-11-25");
+  });
+
+  test("Tarifa identificada", function() {
+    expect(res.getBody().tarifaId).to.be.a("string");
+    expect(res.getBody().tarifaVersion).to.be.a("number");
+  });
+}

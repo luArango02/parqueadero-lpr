@@ -1,0 +1,56 @@
+meta {
+  name: Iniciar sesion como operador
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{operadorEmail}}",
+    "password": "{{operadorPassword}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const sesion = res.getBody();
+
+    bru.setVar("operadorToken", sesion.accessToken);
+    bru.setVar("operadorId", sesion.usuario.id);
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Token JWT disponible", function() {
+    const token = res.getBody().accessToken;
+
+    expect(token).to.be.a("string");
+    expect(token.split(".")).to.have.lengthOf(3);
+  });
+
+  test("Rol operador correcto", function() {
+    expect(res.getBody().usuario.rol)
+      .to.equal("OPERADOR");
+  });
+
+  test("Usuario activo", function() {
+    expect(res.getBody().usuario.activo).to.equal(true);
+  });
+
+  test("No se exponen credenciales", function() {
+    const usuario = res.getBody().usuario;
+
+    expect(usuario).not.to.have.property("password");
+    expect(usuario).not.to.have.property("passwordHash");
+  });
+}

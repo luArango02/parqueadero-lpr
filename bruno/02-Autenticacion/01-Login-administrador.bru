@@ -1,0 +1,61 @@
+meta {
+  name: Iniciar sesion como administrador
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const sesion = res.getBody();
+
+    bru.setVar("adminToken", sesion.accessToken);
+    bru.setVar("adminId", sesion.usuario.id);
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Token JWT disponible", function() {
+    const token = res.getBody().accessToken;
+
+    expect(token).to.be.a("string");
+    expect(token.split(".")).to.have.lengthOf(3);
+  });
+
+  test("Rol administrador correcto", function() {
+    expect(res.getBody().usuario.rol)
+      .to.equal("ADMINISTRADOR");
+  });
+
+  test("Usuario activo", function() {
+    expect(res.getBody().usuario.activo).to.equal(true);
+  });
+
+  test("No se exponen credenciales", function() {
+    const usuario = res.getBody().usuario;
+
+    expect(usuario).not.to.have.property("password");
+    expect(usuario).not.to.have.property("passwordHash");
+  });
+}
+
+docs {
+  Autentica al administrador y almacena temporalmente
+  su token JWT y su identificador.
+}

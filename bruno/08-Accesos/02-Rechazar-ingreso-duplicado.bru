@@ -1,0 +1,44 @@
+meta {
+  name: Rechazar ingreso de vehiculo que ya esta dentro
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/ingreso
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaCarro}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Ingreso duplicado denegado", function() {
+    expect(res.getBody().autorizado).to.equal(false);
+  });
+
+  test("Barrera cerrada", function() {
+    expect(res.getBody().barrera).to.equal("CERRADA");
+  });
+
+  test("Motivo de denegacion disponible", function() {
+    expect(res.getBody().motivo).to.be.a("string");
+    expect(res.getBody().motivo.length).to.be.greaterThan(0);
+  });
+}

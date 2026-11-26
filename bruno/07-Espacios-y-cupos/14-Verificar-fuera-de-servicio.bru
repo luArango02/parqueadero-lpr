@@ -1,0 +1,47 @@
+meta {
+  name: Verificar espacio deshabilitado en disponibilidad
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/api/espacios/disponibilidad
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Zona de prueba registrada", function() {
+    expect(res.getBody().some(
+      z => z.zona === "Z" && z.tipo === "CARRO"
+    )).to.equal(true);
+  });
+
+  test("Espacio fuera de servicio contabilizado", function() {
+    const zona = res.getBody().find(
+      z => z.zona === "Z" && z.tipo === "CARRO"
+    );
+
+    expect(zona.fueraDeServicio).to.be.at.least(1);
+  });
+
+  test("Capacidad total incrementada en uno", function() {
+    const total = res.getBody()
+      .reduce((suma, z) => suma + z.total, 0);
+
+    expect(total)
+      .to.equal(Number(bru.getVar("totalEspaciosInicial")) + 1);
+  });
+
+  test("Conteos consistentes", function() {
+    expect(res.getBody().every(z =>
+      z.total === z.disponibles +
+                 z.ocupados +
+                 z.fueraDeServicio
+    )).to.equal(true);
+  });
+}

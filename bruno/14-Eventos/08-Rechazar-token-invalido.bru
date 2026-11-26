@@ -1,0 +1,30 @@
+meta {
+  name: Rechazar-token-invalido
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/historial
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: token-invalido
+}
+
+tests {
+  test("HTTP 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Respuesta de error documentada", function () {
+    const body = res.getBody();
+
+    expect(body.statusCode).to.equal(401);
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("path");
+    expect(body).to.have.property("timestamp");
+  });
+}

@@ -1,0 +1,48 @@
+meta {
+  name: Consultar alerta anti-passback abierta
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/alertas?estado=ABIERTA&tipo=ANTI_PASSBACK
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const alerta = res.getBody().find(
+      a => a.tipo === "ANTI_PASSBACK" && a.estado === "ABIERTA"
+    );
+
+    if (alerta) {
+      bru.setVar("alertaAntiPassbackId", alerta.id);
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Existe alerta anti-passback abierta", function() {
+    expect(res.getBody().length).to.be.greaterThan(0);
+  });
+
+  test("Filtros aplicados correctamente", function() {
+    expect(res.getBody().every(
+      a => a.tipo === "ANTI_PASSBACK" &&
+           a.estado === "ABIERTA"
+    )).to.equal(true);
+  });
+
+  test("Identificador recuperado", function() {
+    expect(bru.getVar("alertaAntiPassbackId")).to.be.a("string");
+  });
+}

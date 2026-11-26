@@ -1,0 +1,64 @@
+meta {
+  name: Modificar tarifa diurna vigente
+  type: http
+  seq: 22
+}
+
+patch {
+  url: {{baseUrl}}/api/tarifas/{{tarifaDiurnaNuevaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"valor":10000}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+      const body = res.getBody();
+      bru.setVar("tarifaDiurnaModificadaId", body.diurna.id);
+      bru.setVar("versionTarifaModificada", body.diurna.version);
+      bru.setVar("fechaTarifaModificada", body.diurna.vigenteDesde);
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Tarifa diurna modificada", function () {
+      expect(res.getBody().diurna.valor).to.equal("10000.00");
+  });
+
+  test("Tarifa nocturna conservada", function () {
+      expect(res.getBody().nocturna.valor).to.equal("6000.00");
+  });
+
+  test("Nueva version del par completo", function () {
+      const body = res.getBody();
+      expect(body.diurna.version).to.equal(
+          Number(bru.getVar("versionTarifaNueva")) + 1
+      );
+      expect(body.nocturna.version).to.equal(body.diurna.version);
+  });
+
+  test("Nuevos identificadores y vigencia", function () {
+      const body = res.getBody();
+      expect(body.diurna.id).not.to.equal(bru.getVar("tarifaDiurnaNuevaId"));
+      expect(body.nocturna.id).not.to.equal(bru.getVar("tarifaNocturnaNuevaId"));
+      expect(body.diurna.vigenteHasta).to.equal(null);
+      expect(body.nocturna.vigenteHasta).to.equal(null);
+  });
+}

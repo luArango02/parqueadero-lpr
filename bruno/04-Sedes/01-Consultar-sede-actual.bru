@@ -1,0 +1,84 @@
+meta {
+  name: Consultar sede actual
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/sedes/actual
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const sede = res.getBody();
+
+    bru.setVar("sedeId", sede.id);
+
+    const entrada = sede.carriles.find(
+      carril => carril.sentido === "ENTRADA"
+    );
+
+    const salida = sede.carriles.find(
+      carril => carril.sentido === "SALIDA"
+    );
+
+    if (entrada) {
+      bru.setVar("carrilEntradaId", entrada.id);
+    }
+
+    if (salida) {
+      bru.setVar("carrilSalidaId", salida.id);
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identificador de sede disponible", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+
+  test("Zona horaria Colombia", function() {
+    expect(res.getBody().zonaHoraria)
+      .to.equal("America/Bogota");
+  });
+
+  test("Dia operativo inicia a las 06:00", function() {
+    expect(res.getBody().inicioDiaOperativo)
+      .to.equal("06:00");
+  });
+
+  test("Franja nocturna inicia a las 18:00", function() {
+    expect(res.getBody().inicioFranjaNocturna)
+      .to.equal("18:00");
+  });
+
+  test("Existe carril de entrada y salida", function() {
+    const sentidos = res.getBody().carriles.map(
+      carril => carril.sentido
+    );
+
+    expect(sentidos).to.include("ENTRADA");
+    expect(sentidos).to.include("SALIDA");
+  });
+
+  test("Resumen de espacios consistente", function() {
+    const resumen = res.getBody().resumenEspacios;
+
+    expect(resumen.total).to.equal(
+      resumen.disponibles +
+      resumen.ocupados +
+      resumen.fueraDeServicio
+    );
+  });
+}
+
+docs {
+  Consulta la sede actual y almacena dinamicamente
+  los identificadores de sede y carriles.
+}

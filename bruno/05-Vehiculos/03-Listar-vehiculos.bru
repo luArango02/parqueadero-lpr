@@ -1,0 +1,27 @@
+meta {
+  name: Listar vehiculos registrados
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/vehiculos
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Respuesta de tipo arreglo", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+
+  test("Vehiculo registrado aparece en listado", function() {
+    expect(res.getBody().some(
+      v => v.id === bru.getVar("vehiculoId")
+    )).to.equal(true);
+  });
+}

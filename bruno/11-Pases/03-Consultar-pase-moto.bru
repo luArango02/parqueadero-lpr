@@ -1,0 +1,33 @@
+meta {
+  name: Consultar pase de motocicleta exenta
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/pases/{{placaMoto}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("No existe cobro asociado", function() {
+    expect(res.getBody().cobroId).to.equal(null);
+  });
+
+  test("No existe estado de cobro", function() {
+    expect(res.getBody().estadoCobro).to.equal(null);
+  });
+
+  test("No requiere pase pagado", function() {
+    expect(res.getBody().vigente).to.equal(false);
+  });
+}

@@ -1,0 +1,58 @@
+meta {
+  name: Consultar version inicial
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/vigentes?sedeId={{sedeId}}
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+      const tarifas = res.getBody();
+      const diurna = tarifas.find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "DIURNA"
+      );
+      const nocturna = tarifas.find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "NOCTURNA"
+      );
+
+      bru.setVar("tarifaDiurnaInicialId", diurna.id);
+      bru.setVar("tarifaNocturnaInicialId", nocturna.id);
+      bru.setVar("versionTarifaInicial", diurna.version);
+      bru.setVar("fechaTarifaInicial", diurna.vigenteDesde);
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Existen cuatro tarifas vigentes", function () {
+      expect(res.getBody()).to.have.lengthOf(4);
+  });
+
+  test("Tarifa diurna original de carro", function () {
+      const tarifa = res.getBody().find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "DIURNA"
+      );
+      expect(tarifa.valor).to.equal("8000.00");
+  });
+
+  test("Tarifa nocturna original de carro", function () {
+      const tarifa = res.getBody().find(t =>
+          t.tipoVehiculo === "CARRO" && t.franja === "NOCTURNA"
+      );
+      expect(tarifa.valor).to.equal("5000.00");
+  });
+
+  test("Motocicletas exentas", function () {
+      const motos = res.getBody().filter(t => t.tipoVehiculo === "MOTO");
+      expect(motos).to.have.lengthOf(2);
+      motos.forEach(t => expect(t.valor).to.equal("0.00"));
+  });
+}

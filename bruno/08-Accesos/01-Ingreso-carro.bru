@@ -1,0 +1,73 @@
+meta {
+  name: Registrar ingreso de carro
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/ingreso
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaCarro}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const resultado = res.getBody();
+
+    if (resultado.autorizado && resultado.cobro) {
+      bru.setVar("cobroId", resultado.cobro.id);
+      bru.setVar("valorCobro", resultado.cobro.valor);
+      bru.setVar("diaOperativo", resultado.cobro.diaOperativo);
+      bru.setVar("espacioAsignado", resultado.espacio);
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Ingreso autorizado", function() {
+    expect(res.getBody().autorizado).to.equal(true);
+  });
+
+  test("Barrera abierta", function() {
+    expect(res.getBody().barrera).to.equal("ABIERTA");
+  });
+
+  test("Espacio asignado", function() {
+    expect(res.getBody().espacio).to.be.a("string");
+  });
+
+  test("Cobro generado", function() {
+    expect(res.getBody().cobro.id).to.be.a("string");
+  });
+
+  test("Cobro pendiente", function() {
+    expect(res.getBody().cobro.estado).to.equal("PENDIENTE");
+  });
+
+  test("Valor del cobro mayor que cero", function() {
+    expect(Number(res.getBody().cobro.valor))
+      .to.be.greaterThan(0);
+  });
+
+  test("Primer ingreso no es reingreso", function() {
+    expect(res.getBody().reingreso).to.equal(false);
+  });
+}

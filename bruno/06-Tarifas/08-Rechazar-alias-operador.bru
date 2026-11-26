@@ -1,0 +1,44 @@
+meta {
+  name: Rechazar-alias-operador
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+      "sedeId": "{{sedeId}}",
+      "tipoVehiculo": "CARRO",
+      "valorDiurno": 9000,
+      "valorNocturno": 6000
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 403", function () {
+      expect(res.getStatus()).to.equal(403);
+  });
+
+  test("Respuesta de error documentada", function () {
+      const body = res.getBody();
+      expect(body.statusCode).to.equal(403);
+      expect(body).to.have.property("message");
+      expect(body).to.have.property("path");
+      expect(body).to.have.property("timestamp");
+  });
+}

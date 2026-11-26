@@ -1,0 +1,62 @@
+meta {
+  name: Crear espacio como administrador
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/espacios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "zona": " z ",
+    "numero": {{numeroEspacioPrueba}},
+    "tipoCompatible": "CARRO"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("espacioPruebaId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Identificador generado", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+
+  test("Zona normalizada", function() {
+    expect(res.getBody().zona).to.equal("Z");
+  });
+
+  test("Codigo generado correctamente", function() {
+    expect(res.getBody().codigo)
+      .to.equal(bru.getVar("codigoEspacioPrueba"));
+  });
+
+  test("Tipo compatible CARRO", function() {
+    expect(res.getBody().tipoCompatible).to.equal("CARRO");
+  });
+
+  test("Estado inicial DISPONIBLE", function() {
+    expect(res.getBody().estado).to.equal("DISPONIBLE");
+  });
+}

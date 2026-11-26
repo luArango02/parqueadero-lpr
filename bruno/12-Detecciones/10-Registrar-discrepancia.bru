@@ -1,0 +1,56 @@
+meta {
+  name: Registrar discrepancia de clasificacion visual
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/detecciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaCarro}}",
+    "confianza": 0.98,
+    "tipoVisual": "MOTO",
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setVar("deteccionDiscrepanciaId", res.getBody().id);
+    bru.setVar("alertaDiscrepanciaId", res.getBody().alertaId);
+  }
+}
+
+tests {
+  test("HTTP 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Placa del vehiculo registrado", function() {
+    expect(res.getBody().placaLeida)
+      .to.equal(bru.getVar("placaCarro"));
+  });
+
+  test("Clasificacion visual diferente", function() {
+    expect(res.getBody().tipoVisual).to.equal("MOTO");
+  });
+
+  test("Alerta generada", function() {
+    expect(res.getBody().alertaId).to.be.a("string");
+  });
+
+  test("Deteccion registrada", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+}

@@ -1,0 +1,41 @@
+meta {
+  name: Consultar espacio ocupado y placa asociada
+  type: http
+  seq: 23
+}
+
+get {
+  url: {{baseUrl}}/api/espacios?estado=OCUPADO
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const espacio = res.getBody().find(
+      e => e.placa === bru.getVar("placaMotoEspacio")
+    );
+
+    if (espacio) {
+      bru.setVar("espacioOcupadoId", espacio.id);
+    }
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Espacio ocupado identificado", function() {
+    expect(bru.getVar("espacioOcupadoId")).to.be.a("string");
+  });
+
+  test("Placa y codigo asociados correctamente", function() {
+    expect(res.getBody().some(e =>
+      e.placa === bru.getVar("placaMotoEspacio") &&
+      e.codigo === bru.getVar("codigoEspacioOcupado") &&
+      e.estado === "OCUPADO"
+    )).to.equal(true);
+  });
+}

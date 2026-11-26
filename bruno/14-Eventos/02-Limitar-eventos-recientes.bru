@@ -1,0 +1,31 @@
+meta {
+  name: Limitar eventos recientes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/eventos/recientes?limite=3
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Devuelve exactamente tres eventos", function () {
+    expect(res.getBody()).to.be.an("array");
+    expect(res.getBody().length).to.equal(3);
+  });
+
+  test("Eventos ordenados correctamente", function () {
+    const datos = res.getBody();
+
+    for (let i = 1; i < datos.length; i++) {
+      expect(Date.parse(datos[i - 1].ocurridoEn))
+        .to.be.at.least(Date.parse(datos[i].ocurridoEn));
+    }
+  });
+}

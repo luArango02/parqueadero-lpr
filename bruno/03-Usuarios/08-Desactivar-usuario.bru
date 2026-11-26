@@ -1,0 +1,36 @@
+meta {
+  name: Desactivar usuario de pruebas
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/usuarios/{{usuarioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "activo": false
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Usuario desactivado", function() {
+    expect(res.getBody().activo).to.equal(false);
+  });
+
+  test("Identificador conservado", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("usuarioPruebaId"));
+  });
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar pago sin token
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/pagos/efectivo
+  body: json
+  auth: none
+}
+
+body:json {
+  {"cobroId":"{{cobroId}}","referencia":"{{referenciaPago}}"}
+}
+
+script:pre-request {
+    if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+      throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+    }
+}
+
+tests {
+  test("HTTP 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Contrato de error HTTP", function () {
+    const body = res.getBody();
+    expect(body.statusCode).to.equal(401);
+    expect(body).to.have.property("message");
+    expect(body).to.have.property("path");
+    expect(body).to.have.property("timestamp");
+  });
+}

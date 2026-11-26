@@ -1,0 +1,39 @@
+meta {
+  name: Rechazar-valor-negativo
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas/versiones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {"sedeId":"{{sedeId}}","tipoVehiculo":"CARRO","valorDiurno":8000,"valorNocturno":-1}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 400", function () {
+      expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Respuesta de error documentada", function () {
+      const body = res.getBody();
+      expect(body.statusCode).to.equal(400);
+      expect(body).to.have.property("message");
+      expect(body).to.have.property("path");
+      expect(body).to.have.property("timestamp");
+  });
+}

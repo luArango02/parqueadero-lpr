@@ -1,0 +1,168 @@
+meta {
+  name: Consultar auditoria administrador
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/auditoria?pagina=1&limite=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    const body = res.getBody();
+
+    const registro = body.datos.find(function (e) {
+      return e.usuarioId &&
+        e.entidadId &&
+        e.entidad === "Tarifa";
+    });
+
+    if (registro) {
+      bru.setVar("auditoriaUsuarioId", registro.usuarioId);
+      bru.setVar("auditoriaEntidadId", registro.entidadId);
+      bru.setVar("auditoriaAccion", registro.accion);
+      bru.setVar("auditoriaEntidad", registro.entidad);
+      bru.setVar("auditoriaFecha", registro.ocurridaEn);
+      bru.setVar("auditoriaRegistroId", registro.id);
+    }
+
+    bru.setVar("totalAuditoria", String(body.total));
+  }
+}
+
+tests {
+  test("HTTP 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Contrato de paginacion", function () {
+    const body = res.getBody();
+
+    expect(body.datos).to.be.an("array");
+    expect(body.total).to.be.greaterThan(0);
+    expect(body.pagina).to.equal(1);
+    expect(body.limite).to.equal(100);
+    expect(body.totalPaginas)
+      .to.equal(Math.ceil(body.total / 100));
+    expect(body.datos.length)
+      .to.equal(Math.min(body.total, 100));
+  });
+
+  test("Contrato de registros de auditoria", function () {
+    res.getBody().datos.forEach(function (e) {
+      expect(e.id).to.be.a("string");
+      expect(e.accion).to.be.a("string");
+      expect(e.entidad).to.be.a("string");
+
+      expect(e).to.have.property("usuarioId");
+      expect(e).to.have.property("usuario");
+      expect(e).to.have.property("entidadId");
+      expect(e).to.have.property("datosAnteriores");
+      expect(e).to.have.property("datosNuevos");
+
+      expect(Number.isFinite(Date.parse(e.ocurridaEn)))
+        .to.equal(true);
+    });
+  });
+
+  test("Identificacion del usuario responsable", function () {
+    const registros = res.getBody().datos.filter(function (e) {
+      return e.usuario !== null;
+    });
+
+    expect(registros.length).to.be.greaterThan(0);
+
+    registros.forEach(function (e) {
+      expect(e.usuario.id).to.equal(e.usuarioId);
+      expect(e.usuario.nombre).to.be.a("string");
+      expect(["ADMINISTRADOR", "OPERADOR"])
+        .to.include(e.usuario.rol);
+    });
+  });
+
+  test("Auditoria contiene las entidades esperadas", function () {
+    const entidades = res.getBody().datos.map(function (e) {
+      return e.entidad;
+    });
+
+    [
+      "Usuario", "Tarifa", "Espacio",
+      "Alerta", "Deteccion", "Pago"
+    ].forEach(function (entidad) {
+      expect(entidades).to.include(entidad);
+    });
+  });
+
+  test("Orden cronologico descendente", function () {
+    const datos = res.getBody().datos;
+
+    for (let i = 1; i < datos.length; i++) {
+      expect(Date.parse(datos[i - 1].ocurridaEn))
+        .to.be.at.least(Date.parse(datos[i].ocurridaEn));
+    }
+  });
+
+  test("No se exponen campos sensibles", function () {
+    const prohibidos = [
+      "password",
+      "passwordhash",
+      "contrasena",
+      "contraseña",
+      "accesstoken",
+      "refreshtoken",
+      "token",
+      "authorization",
+      "secret",
+      "apikey",
+      "databaseurl"
+    ];
+
+    function revisar(valor) {
+      if (valor === null || typeof valor !== "object") {
+        return;
+      }
+
+      Object.keys(valor).forEach(function (clave) {
+        const normalizada = clave.toLowerCase()
+          .replace(/[^a-z0-9ñ]/g, "");
+
+        expect(prohibidos).not.to.include(normalizada);
+        revisar(valor[clave]);
+      });
+    }
+
+    revisar(res.getBody());
+  });
+
+  test("Datos anteriores y nuevos son objetos seguros", function () {
+    res.getBody().datos.forEach(function (e) {
+      [e.datosAnteriores, e.datosNuevos].forEach(function (datos) {
+        if (datos !== null) {
+          expect(datos).to.be.an("object");
+
+          Object.values(datos).forEach(function (valor) {
+            expect(
+              valor === null ||
+              ["string", "number", "boolean"]
+                .includes(typeof valor)
+            ).to.equal(true);
+          });
+        }
+      });
+    });
+  });
+
+  test("Existe registro de tarifa para filtros", function () {
+    expect(bru.getVar("auditoriaUsuarioId")).to.be.a("string");
+    expect(bru.getVar("auditoriaEntidadId")).to.be.a("string");
+    expect(bru.getVar("auditoriaAccion")).to.be.a("string");
+    expect(bru.getVar("auditoriaFecha")).to.be.a("string");
+  });
+}

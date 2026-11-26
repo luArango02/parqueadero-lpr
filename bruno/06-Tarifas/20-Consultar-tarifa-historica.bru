@@ -1,0 +1,33 @@
+meta {
+  name: Consultar tarifa historica
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/{{tarifaDiurnaInicialId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Valor historico conservado", function () {
+      expect(res.getBody().valor).to.equal("8000.00");
+  });
+
+  test("Version historica conservada", function () {
+      expect(res.getBody().version).to.equal(
+          Number(bru.getVar("versionTarifaInicial"))
+      );
+  });
+
+  test("Vigencia anterior cerrada correctamente", function () {
+      expect(res.getBody().vigenteHasta).to.equal(
+          bru.getVar("fechaNuevaVersion")
+      );
+  });
+}

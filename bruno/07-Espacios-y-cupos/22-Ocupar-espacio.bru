@@ -1,0 +1,49 @@
+meta {
+  name: Ocupar espacio mediante ingreso real
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/api/accesos/ingreso
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "placa": "{{placaMotoEspacio}}",
+    "confianza": 0.98,
+    "carrilId": "{{carrilEntradaId}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.getBody().autorizado) {
+    bru.setVar("codigoEspacioOcupado", res.getBody().espacio);
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Ingreso autorizado", function() {
+    expect(res.getBody().autorizado).to.equal(true);
+  });
+
+  test("Espacio asignado", function() {
+    expect(res.getBody().espacio).to.be.a("string");
+  });
+
+  test("Motocicleta exenta", function() {
+    expect(res.getBody().cobro).to.equal(null);
+  });
+}

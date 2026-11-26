@@ -1,0 +1,50 @@
+meta {
+  name: Versionar tarifas gratuitas de motocicletas
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/api/tarifas/versiones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+      "sedeId": "{{sedeId}}",
+      "tipoVehiculo": "MOTO",
+      "valorDiurno": 0,
+      "valorNocturno": 0
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 201", function () {
+      expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Excepcion de motocicletas permitida", function () {
+      const body = res.getBody();
+      expect(body.diurna.tipoVehiculo).to.equal("MOTO");
+      expect(body.nocturna.tipoVehiculo).to.equal("MOTO");
+      expect(body.diurna.valor).to.equal("0.00");
+      expect(body.nocturna.valor).to.equal("0.00");
+  });
+
+  test("Version sincronizada", function () {
+      expect(res.getBody().diurna.version).to.equal(
+          res.getBody().nocturna.version
+      );
+  });
+}

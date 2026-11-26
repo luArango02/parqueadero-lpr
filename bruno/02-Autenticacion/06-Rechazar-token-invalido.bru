@@ -1,0 +1,25 @@
+meta {
+  name: Rechazar token invalido
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/auth/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: token-invalido-parq41
+}
+
+tests {
+  test("HTTP 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Error de autenticacion", function() {
+    expect(res.getBody().statusCode).to.equal(401);
+  });
+}

@@ -1,0 +1,44 @@
+meta {
+  name: Rehabilitar espacio fuera de servicio
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{baseUrl}}/api/espacios/{{espacioPruebaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+{"estado":"DISPONIBLE"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Espacio nuevamente disponible", function() {
+    expect(res.getBody().estado).to.equal("DISPONIBLE");
+  });
+
+  test("Identificador conservado", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("espacioPruebaId"));
+  });
+
+  test("Tipo compatible conservado", function() {
+    expect(res.getBody().tipoCompatible).to.equal("CARRO");
+  });
+}

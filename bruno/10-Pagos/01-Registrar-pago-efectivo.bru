@@ -1,0 +1,72 @@
+meta {
+  name: Registrar pago en efectivo
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/pagos/efectivo
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "cobroId": "{{cobroId}}",
+    "referencia": "{{referenciaPago}}"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setVar("pagoId", res.getBody().id);
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Pago registrado", function() {
+    expect(res.getBody().id).to.be.a("string");
+  });
+
+  test("Cobro correcto", function() {
+    expect(res.getBody().cobroId)
+      .to.equal(bru.getVar("cobroId"));
+  });
+
+  test("Medio de pago efectivo", function() {
+    expect(res.getBody().medio).to.equal("EFECTIVO");
+  });
+
+  test("Cobro pagado", function() {
+    expect(res.getBody().estadoCobro).to.equal("PAGADO");
+  });
+
+  test("Valor del pago correcto", function() {
+    expect(Number(res.getBody().valor))
+      .to.equal(Number(bru.getVar("valorCobro")));
+  });
+
+  test("Operador responsable identificado", function() {
+    expect(res.getBody().registradoPorId)
+      .to.equal(bru.getVar("operadorId"));
+  });
+
+  test("Referencia correcta", function() {
+    expect(res.getBody().referencia)
+      .to.equal(bru.getVar("referenciaPago"));
+  });
+}

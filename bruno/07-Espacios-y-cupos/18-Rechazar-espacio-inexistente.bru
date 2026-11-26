@@ -1,0 +1,35 @@
+meta {
+  name: Rechazar modificacion de espacio inexistente
+  type: http
+  seq: 18
+}
+
+patch {
+  url: {{baseUrl}}/api/espacios/00000000-0000-4000-8000-000000000041
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+{"estado":"DISPONIBLE"}
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Contrato de error correcto", function() {
+    expect(res.getBody().statusCode).to.equal(404);
+  });
+}

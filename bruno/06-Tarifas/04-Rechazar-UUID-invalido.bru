@@ -1,0 +1,26 @@
+meta {
+  name: Rechazar identificador de sede invalido
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/tarifas/vigentes?sedeId=invalido
+  body: none
+  auth: none
+}
+
+tests {
+  test("HTTP 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Contrato de error HTTP", function() {
+    const error = res.getBody();
+
+    expect(error.statusCode).to.equal(400);
+    expect(error.message).to.be.a("string");
+    expect(error.path).to.be.a("string");
+    expect(error.timestamp).to.be.a("string");
+  });
+}

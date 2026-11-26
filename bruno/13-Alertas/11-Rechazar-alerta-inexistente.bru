@@ -1,0 +1,38 @@
+meta {
+  name: Rechazar resolucion de alerta inexistente
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/api/alertas/00000000-0000-4000-8000-000000000041/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "estado": "RESUELTA",
+    "resolucion": "Revision de prueba PARQ-41"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Alerta no encontrada", function() {
+    expect(res.getBody().statusCode).to.equal(404);
+  });
+}

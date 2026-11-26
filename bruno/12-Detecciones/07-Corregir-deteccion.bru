@@ -1,0 +1,69 @@
+meta {
+  name: Corregir lectura mediante operador
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/detecciones/{{deteccionPendienteId}}/validacion
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{operadorToken}}
+}
+
+body:json {
+  {
+    "placa": "qzx 124",
+    "motivo": "Correccion manual de prueba PARQ-41"
+  }
+}
+
+script:pre-request {
+  if (bru.getEnvVar("baseUrl") !== "http://localhost:3001") {
+    throw new Error("Ejecutar solo en el entorno aislado PARQ-41");
+  }
+}
+
+tests {
+  test("HTTP 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Identificador original conservado", function() {
+    expect(res.getBody().id)
+      .to.equal(bru.getVar("deteccionPendienteId"));
+  });
+
+  test("Lectura original conservada", function() {
+    expect(res.getBody().placaLeida).to.equal("QZX123");
+  });
+
+  test("Placa final corregida y normalizada", function() {
+    expect(res.getBody().placaFinal).to.equal("QZX124");
+  });
+
+  test("Estado CORREGIDA", function() {
+    expect(res.getBody().estado).to.equal("CORREGIDA");
+  });
+
+  test("Lectura marcada como manual", function() {
+    expect(res.getBody().lecturaManual).to.equal(true);
+  });
+
+  test("Operador responsable identificado", function() {
+    expect(res.getBody().corregidaPorId)
+      .to.equal(bru.getVar("operadorId"));
+  });
+
+  test("Motivo de correccion conservado", function() {
+    expect(res.getBody().motivoCorreccion)
+      .to.equal("Correccion manual de prueba PARQ-41");
+  });
+
+  test("Confianza original conservada", function() {
+    expect(res.getBody().confianza).to.equal(0.35);
+  });
+}
