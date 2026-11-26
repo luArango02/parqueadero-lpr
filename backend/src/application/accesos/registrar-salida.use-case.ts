@@ -12,6 +12,8 @@ export interface SolicitudSalida {
   placa: string;
   confianza?: number;
   carrilId?: string;
+  /** El operador confirmó o corrigió la placa en pantalla (RN-14). */
+  lecturaManual?: boolean;
 }
 
 export interface ResultadoSalida {
@@ -75,7 +77,10 @@ export class RegistrarSalidaUseCase {
       };
     };
 
-    if ((solicitud.confianza ?? 1) < sede.umbralConfianza) {
+    if (
+      !solicitud.lecturaManual &&
+      (solicitud.confianza ?? 1) < sede.umbralConfianza
+    ) {
       return denegar('BAJA CONFIANZA: REQUIERE VALIDACIÓN MANUAL');
     }
 
@@ -115,6 +120,7 @@ export class RegistrarSalidaUseCase {
       placa,
       permanencia,
       ocurridoEn: ahora,
+      lecturaManual: solicitud.lecturaManual ?? false,
     });
     if (!registrada) {
       return denegar('LA PLACA NO FIGURA ADENTRO', permanencia.tipo);

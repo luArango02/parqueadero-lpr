@@ -137,3 +137,18 @@ export function crearEspacio(datos: {
   return conToken('POST', '/espacios', datos)
 }
 
+// Lectura confirmada por el operador (RN-14): exige sesión de operador o administrador.
+export function registrarIngresoManual(
+  placa: string,
+  tipoVehiculo?: 'CARRO' | 'MOTO',
+): Promise<ResultadoIngreso> {
+  return conToken('POST', '/accesos/ingreso/manual', { placa, tipoVehiculo })
+}
+
+export function registrarSalidaManual(placa: string): Promise<ResultadoSalida> {
+  return conToken('POST', '/accesos/salida/manual', { placa })
+}
+
+export function registrarPagoEfectivo(cobroId: string, referencia: string): Promise<unknown> {
+  return conToken('POST', '/pagos/efectivo', { cobroId, referencia })
+}

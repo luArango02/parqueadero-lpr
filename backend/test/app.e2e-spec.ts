@@ -168,4 +168,15 @@ describe('API (e2e)', () => {
         .expect(403);
     });
   });
+
+  it('la lectura manual exige un operador autenticado: 401 sin token', async () => {
+    await request(app.getHttpServer())
+      .post('/api/accesos/ingreso/manual')
+      .send({ placa: 'GHI789' })
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/api/accesos/salida/manual')
+      .send({ placa: 'GHI789' })
+      .expect(401);
+  });
 });

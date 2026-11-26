@@ -1,10 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   RegistrarIngresoUseCase,
   ResultadoIngreso,
@@ -13,12 +8,10 @@ import {
   RegistrarSalidaUseCase,
   ResultadoSalida,
 } from '../../../application/accesos/registrar-salida.use-case';
+import { Auditar } from '../auditoria/auditar.decorator';
+import { Autenticado } from '../auth/autenticado.decorator';
+import { LecturaManualDto } from '../dto/lectura-manual.dto';
 import { LecturaPlacaDto } from '../dto/lectura-placa.dto';
-import {
-  IngresoRespuestaDto,
-  SalidaRespuestaDto,
-} from '../docs/respuestas/acceso-respuesta.dto';
-import { ErrorHttpDto } from '../docs/respuestas/error-http.dto';
 
 // Ambos endpoints responden 200 aunque nieguen el paso: la decisión va en el cuerpo para que el carril la muestre.
 @ApiTags('Accesos')
@@ -31,19 +24,9 @@ export class AccesosController {
 
   @Post('ingreso')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Registrar el ingreso de un vehículo por su placa',
-    description:
-      'Valida la lectura, el tipo de vehículo, la disponibilidad de espacios y el cobro del día operativo. Si existe un pase vigente, permite el reingreso sin generar otro cobro, siempre que exista disponibilidad.',
-  })
+  @ApiOperation({ summary: 'Registrar el ingreso de un vehículo por su placa' })
   @ApiOkResponse({
-    description:
-      'Decisión de ingreso. Puede autorizar o denegar el acceso mediante el campo autorizado.',
-    type: IngresoRespuestaDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Datos de lectura inválidos',
-    type: ErrorHttpDto,
+    description: 'Decisión del carril: barrera ABIERTA o CERRADA con su motivo',
   })
   ingreso(@Body() dto: LecturaPlacaDto): Promise<ResultadoIngreso> {
     return this.registrarIngreso.ejecutar(dto);
@@ -52,20 +35,35 @@ export class AccesosController {
   @Post('salida')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Registrar la salida de un vehículo',
-    description:
-      'Verifica la permanencia activa y los cobros pendientes. Si la salida es autorizada, registra el evento y libera el espacio ocupado.',
+    summary: 'Registrar la salida de un vehículo y liberar su espacio',
   })
   @ApiOkResponse({
     description:
-      'Decisión de salida. Si existen cobros pendientes, la barrera permanece cerrada y el espacio continúa ocupado.',
-    type: SalidaRespuestaDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Datos de lectura inválidos',
-    type: ErrorHttpDto,
+      'Barrera ABIERTA si no tiene cobros pendientes; CERRADA con el motivo si no',
   })
   salida(@Body() dto: LecturaPlacaDto): Promise<ResultadoSalida> {
     return this.registrarSalida.ejecutar(dto);
+  }
+
+  // RN-14: el operador confirma o corrige la placa; queda auditado con su usuario.
+  @Post('ingreso/manual')
+  @HttpCode(HttpStatus.OK)
+  @Autenticado('OPERADOR', 'ADMINISTRADOR')
+  @Auditar('INGRESO_LECTURA_MANUAL', 'EventoAcceso')
+  @ApiOperation({ summary: 'Ingreso con placa confirmada por el operador' })
+  ingresoManual(@Body() dto: LecturaManualDto): Promise<ResultadoIngreso> {
+    return this.registrarIngreso.ejecutar({ ...dto, lecturaManual: true });
+  }
+
+  @Post('salida/manual')
+  @HttpCode(HttpStatus.OK)
+  @Autenticado('OPERADOR', 'ADMINISTRADOR')
+  @Auditar('SALIDA_LECTURA_MANUAL', 'EventoAcceso')
+  @ApiOperation({ summary: 'Salida con placa confirmada por el operador' })
+  salidaManual(@Body() dto: LecturaManualDto): Promise<ResultadoSalida> {
+    return this.registrarSalida.ejecutar({
+      placa: dto.placa,
+      lecturaManual: true,
+    });
   }
 }

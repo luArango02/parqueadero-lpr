@@ -72,7 +72,9 @@ class RepositorioEnMemoria implements IngresoRepositorio {
       valor: TARIFAS[tipo][franja],
     });
   }
+  manuales: string[] = [];
   registrarIngreso(datos: DatosIngreso): Promise<IngresoRegistrado | null> {
+    if (datos.lecturaManual) this.manuales.push(datos.placa);
     const espacio = this.espaciosLibres[datos.tipo].shift();
     if (!espacio) return Promise.resolve(null);
     this.adentro.add(datos.placa);
@@ -285,6 +287,46 @@ describe('RegistrarIngresoUseCase', () => {
     const resultado = await casoDeUso.ejecutar({ placa: 'AB1234' });
 
     expect(resultado.autorizado).toBe(false);
+    expect(resultado.motivo).toContain('PLACA NO RECONOCIDA');
+  });
+
+  it('el operador confirma una lectura de baja confianza y el vehículo entra (RN-14)', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      confianza: 0.5,
+      lecturaManual: true,
+    });
+
+    expect(resultado.autorizado).toBe(true);
+    expect(repositorio.manuales).toEqual(['ABC123']);
+  });
+
+  it('en lectura manual el operador indica el tipo de una placa no reconocida', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'AB1234',
+      lecturaManual: true,
+      tipoVehiculo: 'MOTO',
+    });
+
+    expect(resultado).toMatchObject({ autorizado: true, tipoVehiculo: 'MOTO' });
+  });
+
+  it('el tipo indicado a mano no cambia el de una placa con formato conocido', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'ABC123',
+      lecturaManual: true,
+      tipoVehiculo: 'MOTO',
+    });
+
+    expect(resultado.tipoVehiculo).toBe('CARRO');
+  });
+
+  it('sin lectura manual se ignora el tipo enviado', async () => {
+    const resultado = await casoDeUso.ejecutar({
+      placa: 'AB1234',
+      tipoVehiculo: 'MOTO',
+    });
+
     expect(resultado.motivo).toContain('PLACA NO RECONOCIDA');
   });
 

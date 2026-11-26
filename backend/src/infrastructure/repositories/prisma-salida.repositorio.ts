@@ -200,6 +200,7 @@ export class PrismaSalidaRepositorio implements SalidaRepositorio {
           placa: datos.placa,
           vehiculoId: datos.permanencia.vehiculoId,
           tipo: 'SALIDA',
+          motivo: datos.lecturaManual ? 'LECTURA MANUAL' : null,
           espacioId: datos.permanencia.espacioId,
           ocurridoEn: datos.ocurridoEn,
         },

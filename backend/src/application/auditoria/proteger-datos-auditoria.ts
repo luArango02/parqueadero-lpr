@@ -13,6 +13,8 @@ const CAMPOS_PERMITIDOS: Readonly<Record<string, readonly string[]>> = {
     'valor',
     'estado',
   ],
+  // Lectura manual en el carril: qué placa confirmó el operador.
+  EventoAcceso: ['placa', 'tipoVehiculo'],
   Deteccion: ['placaLeida', 'placaFinal', 'estado', 'lecturaManual', 'motivo'],
   Tarifa: [
     'id',

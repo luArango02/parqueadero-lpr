@@ -18,7 +18,13 @@ async function entrar() {
   try {
     const { accessToken, usuario } = await iniciarSesion(email.value, password.value)
     guardarSesion(accessToken, usuario)
-    const destino = typeof route.query.volver === 'string' ? route.query.volver : '/admin'
+    // Sin destino pedido: el administrador va a Admin y el operador a su carril.
+    const destino =
+      typeof route.query.volver === 'string' && !(route.query.motivo && usuario.rol !== 'ADMINISTRADOR')
+        ? route.query.volver
+        : usuario.rol === 'ADMINISTRADOR'
+          ? '/admin'
+          : '/carril/salida'
     await router.push(destino)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'No se pudo iniciar sesión'

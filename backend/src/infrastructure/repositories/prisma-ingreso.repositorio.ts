@@ -141,6 +141,7 @@ export class PrismaIngresoRepositorio implements IngresoRepositorio {
           placa: datos.placa,
           vehiculoId: vehiculo.id,
           tipo: 'INGRESO',
+          motivo: datos.lecturaManual ? 'LECTURA MANUAL' : null,
           espacioId: espacio.id,
           ocurridoEn: datos.ocurridoEn,
         },
